@@ -11,19 +11,21 @@ import {
   //Picker,
 } from "react-native";
 import { Picker } from '@react-native-picker/picker';
-import { resumes } from "../../data/mocks/resumes";
+import { resumes, vacancyMock } from "../../data/mocks/resumes";
 import { checkSkillsMatch } from "../../domain/usecases/checkSkillsMatch";
+import { vacancies } from "../../data/mocks/vacancies";
 
 const VacancyDetailView = () => {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [selectedResume, setSelectedResume] = useState("");
   const [showWarning, setShowWarning] = useState(false);
-
+  const vacancy = vacancies[0];
   const handleApplyPress = () => {
     setShowWarning(false);
     setSelectedResume("");
     setShowApplyModal(true);
   };
+
 
   const handleConfirmApply = () => {
     if (!selectedResume) {
@@ -78,17 +80,17 @@ const VacancyDetailView = () => {
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Компания</Text>
-            <Text style={styles.value}>TechCorp</Text>
+            <Text style={styles.value}>{vacancy.company}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Зарплата</Text>
-            <Text style={styles.value}>от 150 000 ₽</Text>
+            <Text style={styles.value}>{vacancy.salary}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Город/формат работы</Text>
-            <Text style={styles.value}>Москва • Гибрид</Text>
+            <Text style={styles.value}>{vacancy.location}/{vacancy.format}</Text>
           </View>
 
           <TouchableOpacity
@@ -103,20 +105,20 @@ const VacancyDetailView = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Описание</Text>
           <Text style={styles.sectionText}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit...
+           {vacancy.description}
           </Text>
         </View>
 
         {/* Требования */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Требования</Text>
-          <Text style={styles.sectionText}>Lorem ipsum dolor sit amet...</Text>
+          <Text style={styles.sectionText}>{vacancy.requirements}</Text>
         </View>
 
         {/* Условия */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Условия</Text>
-          <Text style={styles.sectionText}>Lorem ipsum dolor sit amet...</Text>
+          <Text style={styles.sectionText}>{vacancy.conditions}</Text>
         </View>
       </ScrollView>
 
