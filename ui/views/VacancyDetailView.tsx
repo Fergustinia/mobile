@@ -8,8 +8,9 @@ import {
   Image,
   Modal,
   Alert,
-  Picker,
+  //Picker,
 } from "react-native";
+import { Picker } from '@react-native-picker/picker';
 import { resumes } from "../../data/mocks/resumes";
 import { checkSkillsMatch } from "../../domain/usecases/checkSkillsMatch";
 
@@ -322,6 +323,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#007AFF",
     borderRadius: 12,
     flex: 1,
+    alignItems: "center",
+  },
+  confirmButtonWarning: {
+    backgroundColor: "#ff4d4f",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     alignItems: "center",
   },
   confirmText: { fontSize: 16, color: "#fff", fontWeight: "600" },
