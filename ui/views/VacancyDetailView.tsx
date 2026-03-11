@@ -10,18 +10,13 @@ import {
   Alert,
   Picker,
 } from "react-native";
+import { resumes } from "../../data/mocks/resumes";
+import { checkSkillsMatch } from "../../domain/usecases/checkSkillsMatch";
 
 const VacancyDetailView = () => {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [selectedResume, setSelectedResume] = useState("");
   const [showWarning, setShowWarning] = useState(false);
-
-  // Фейковые резюме (потом подключим из заглушек data)
-  const resumes = [
-    { id: "1", name: "Резюме без опыта (не соответствует)" },
-    { id: "2", name: "Резюме Middle React Native" },
-    { id: "3", name: "Резюме Frontend 2025" },
-  ];
 
   const handleApplyPress = () => {
     setShowWarning(false);
@@ -35,9 +30,14 @@ const VacancyDetailView = () => {
       return;
     }
 
-    // Имитация проверки (потом из ViewModel/CheckSkillsMatchUseCase)
-    //const isBadResume = selectedResume === "1"; // первое резюме — "плохое"
-    if (isBadResume) {
+    const resume = resumes.find((r) => r.id === selectedResume);
+    if (!resume) {
+      Alert.alert("Ошибка", "Выбранное резюме не найдено");
+      return;
+    }
+
+    const { isMatch } = checkSkillsMatch(resume);
+    if (!isMatch) {
       setShowWarning(true);
       return; // не закрываем модал
     }
