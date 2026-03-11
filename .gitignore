@@ -7,3 +7,5 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+package.json
+package-lock.json
