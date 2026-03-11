@@ -1,24 +1,14 @@
-export type Resume = {
-  id: string
-  name: string
-  isRecommended: boolean
-}
+// mobile/data/mocks/resumes.ts
+import { apiMocks } from './api-mocks';
 
-export const resumes: Resume[] = [
-  {
-    id: "1",
-    name: "Резюме без опыта (не соответствует)",
-    isRecommended: false,
-  },
-  {
-    id: "2",
-    name: "Резюме Middle React Native",
-    isRecommended: true,
-  },
-  {
-    id: "3",
-    name: "Резюме Frontend 2025",
-    isRecommended: true,
-  },
-]
+export type Resume = {
+  id: string;
+  name: string;
+  isRecommended: boolean;
+  skills?: string[];
+  experience?: number;
+};
+
+export const resumes: Resume[] = apiMocks.resumes;
+export const vacancyMock = apiMocks.vacancy;
 
