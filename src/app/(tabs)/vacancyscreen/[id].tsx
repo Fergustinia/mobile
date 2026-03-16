@@ -1,20 +1,24 @@
-// mobile/ui/views/VacancyDetailView.tsx
-import React from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, Modal, Alert,
-} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { router, useLocalSearchParams } from 'expo-router';
+import React from 'react';
 
-// Хук с логикой
-import { useApplicationFlow } from '../hooks/useApplicationFlow';
+import {
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-// Компоненты состояний
-import LoadingView from '../state/Loading';
-import ErrorView from '../state/Error';
+import ErrorView from '@/components/ui/state/Error';
+import LoadingView from '@/components/ui/state/Loading';
+import { useApplicationFlow } from '../../../hooks/useApplicationFlow';
 
-const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
-  const VACANCY_ID = 'vacancy_123';
+export default function VacancyDetailScreen() {
+  const params = useLocalSearchParams<{ id?: string }>();
+  const vacancyId = Array.isArray(params.id) ? params.id[0] : params.id || 'vacancy_123';
 
   const {
     modalStep,
@@ -26,9 +30,8 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
     cancelApplication,
     handleConfirmResume,
     handleIgnoreWarning,
-  } = useApplicationFlow(VACANCY_ID);
+  } = useApplicationFlow(vacancyId);
 
-  // Контент модального окна
   const renderModalContent = () => {
     if (loading) return <LoadingView />;
     if (modalStep === 'error') return <ErrorView onRetry={handleConfirmResume} />;
@@ -38,12 +41,15 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
         <>
           <Text style={styles.modalTitle}>Откликнуться на вакансию?</Text>
           <Text style={styles.modalInfo}>Выберите резюме:</Text>
-          
+
           <View style={styles.pickerContainer}>
-            <Picker selectedValue={selectedResumeId} onValueChange={setSelectedResumeId}>
+            <Picker
+              selectedValue={selectedResumeId}
+              onValueChange={(value) => setSelectedResumeId(value)}
+            >
               <Picker.Item label="Выберите резюме" value="" />
-              {availableResumes.map(r => (
-                <Picker.Item key={r.id} label={r.name} value={r.id} />
+              {availableResumes.map((resume) => (
+                <Picker.Item key={resume.id} label={resume.name} value={resume.id} />
               ))}
             </Picker>
           </View>
@@ -52,6 +58,7 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
             <TouchableOpacity style={styles.cancelButton} onPress={cancelApplication}>
               <Text style={styles.cancelText}>Отмена</Text>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmResume}>
               <Text style={styles.confirmText}>Продолжить</Text>
             </TouchableOpacity>
@@ -66,13 +73,14 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
           <Text style={styles.modalTitle}>⚠️ Внимание</Text>
           <Text style={styles.warning}>Навыки могут не соответствовать вакансии.</Text>
           <Text style={styles.modalInfo}>Всё равно отправить отклик?</Text>
-          
+
           <View style={styles.modalButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={cancelApplication}>
               <Text style={styles.cancelText}>Нет</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.confirmButton, styles.confirmButtonWarning]} 
+
+            <TouchableOpacity
+              style={[styles.confirmButton, styles.confirmButtonWarning]}
               onPress={handleIgnoreWarning}
             >
               <Text style={styles.confirmText}>Да, отправить</Text>
@@ -84,8 +92,8 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
 
     if (modalStep === 'success') {
       return (
-        <View style={{ alignItems: 'center', padding: 20 }}>
-          <Text style={{ fontSize: 40 }}>✅</Text>
+        <View style={styles.successContainer}>
+          <Text style={styles.successIcon}>✅</Text>
           <Text style={styles.modalTitle}>Отклик отправлен!</Text>
           <Text style={styles.modalInfo}>Работодатель скоро свяжется с вами.</Text>
         </View>
@@ -97,15 +105,13 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
 
   return (
     <View style={styles.container}>
-      {/* Шапка */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack?.()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backText}>← Назад</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollContent}>
-        {/* Карточка вакансии */}
+      <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentContainer}>
         <View style={styles.card}>
           <View style={styles.logoContainer}>
             <Image
@@ -137,56 +143,49 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
             disabled={modalStep !== 'hidden'}
           >
             <Text style={styles.applyButtonText}>
-              {modalStep === 'submitting' ? 'Отправка...' : 'Откликнуться'}
+            {loading ? 'Отправка...' : 'Откликнуться'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Описание */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Описание</Text>
           <Text style={styles.sectionText}>
-            Мы ищем опытного React Native разработчика для создания мобильных приложений. 
+            Мы ищем опытного React Native разработчика для создания мобильных приложений.
             Вы будете работать над продуктом, которым пользуются тысячи людей.
-            {'\n'}{'\n'}
-            • Разработка новых функций{'\n'}
-            • Оптимизация производительности{'\n'}
-            • Code review и менторство{'\n'}
-            • Участие в архитектурных решениях
+            {'\n'}
+            {'\n'}• Разработка новых функций
+            {'\n'}• Оптимизация производительности
+            {'\n'}• Code review и менторство
+            {'\n'}• Участие в архитектурных решениях
           </Text>
         </View>
 
-        {/* Требования */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Требования</Text>
           <Text style={styles.sectionText}>
-            • Опыт коммерческой разработки от 2 лет{'\n'}
-            • Уверенное знание React / React Native{'\n'}
-            • Понимание принципов работы мобильных ОС{'\n'}
-            • Опыт работы с TypeScript{'\n'}
-            • Знание паттернов проектирования{'\n'}
-            • Английский язык — не ниже B1
+            • Опыт коммерческой разработки от 2 лет
+            {'\n'}• Уверенное знание React / React Native
+            {'\n'}• Понимание принципов работы мобильных ОС
+            {'\n'}• Опыт работы с TypeScript
+            {'\n'}• Знание паттернов проектирования
+            {'\n'}• Английский язык — не ниже B1
           </Text>
         </View>
 
-        {/* Условия */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Условия</Text>
           <Text style={styles.sectionText}>
-            • Конкурентная зарплата и ежегодный пересмотр{'\n'}
-            • ДМС со стоматологией{'\n'}
-            • Гибкий график и возможность удалёнки{'\n'}
-            • Обучение за счёт компании{'\n'}
-            • Современный офис в центре Москвы{'\n'}
-            • Крутая команда и интересные задачи
+            • Конкурентная зарплата и ежегодный пересмотр
+            {'\n'}• ДМС со стоматологией
+            {'\n'}• Гибкий график и возможность удалёнки
+            {'\n'}• Обучение за счёт компании
+            {'\n'}• Современный офис в центре Москвы
+            {'\n'}• Крутая команда и интересные задачи
           </Text>
         </View>
-        
-        {/* Отступ снизу, чтобы контент не прилипал */}
-        <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* Модальное окно */}
       <Modal
         visible={modalStep !== 'hidden'}
         transparent
@@ -194,19 +193,19 @@ const VacancyDetailView = ({ navigation }: { navigation?: any }) => {
         onRequestClose={cancelApplication}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {renderModalContent()}
-          </View>
+          <View style={styles.modalContent}>{renderModalContent()}</View>
         </View>
       </Modal>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  
-  // Шапка
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+
   header: {
     flexDirection: 'row',
     padding: 16,
@@ -214,12 +213,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  backText: { fontSize: 18, fontWeight: '500', color: '#007AFF' },
-  
-  // Скролл
-  scrollContent: { flex: 1 },
-  
-  // Карточка вакансии
+  backText: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#007AFF',
+  },
+
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
+  },
+
   card: {
     backgroundColor: '#fff',
     margin: 16,
@@ -241,7 +247,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  logo: { width: 60, height: 60 },
+  logo: {
+    width: 60,
+    height: 60,
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -256,10 +265,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 8,
   },
-  label: { fontSize: 15, color: '#666' },
-  value: { fontSize: 15, fontWeight: '600', color: '#333' },
-  
-  // Кнопка отклика
+  label: {
+    fontSize: 15,
+    color: '#666',
+  },
+  value: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+
   applyButton: {
     backgroundColor: '#007AFF',
     width: '100%',
@@ -268,9 +283,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
   },
-  applyButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  
-  // Секции (описание, требования, условия)
+  applyButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+
   section: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
@@ -292,8 +310,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#444',
   },
-  
-  // Модальное окно
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -355,7 +372,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: 'center',
   },
-  cancelText: { fontSize: 16, color: '#333' },
+  cancelText: {
+    fontSize: 16,
+    color: '#333',
+  },
   confirmButton: {
     padding: 14,
     backgroundColor: '#007AFF',
@@ -371,6 +391,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  successContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  successIcon: {
+    fontSize: 40,
+  },
 });
-
-export default VacancyDetailView;

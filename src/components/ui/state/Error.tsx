@@ -1,7 +1,11 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
-const ErrorView = ({ onRetry }) => {
+type ErrorViewProps = {
+  onRetry: () => void;
+};
+
+const ErrorView = ({ onRetry }: ErrorViewProps) => {
   return (
     <View style={styles.container}>
       <Text style={styles.icon}>🌐</Text>

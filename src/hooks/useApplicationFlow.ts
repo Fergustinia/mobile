@@ -3,9 +3,9 @@ import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 
 // Домен и данные
-import { checkSkillsMatch } from '../../domain/usecases/checkSkillsMatch';
-import { resumes } from '../../data/mocks/resumes';
-import { mockServer } from '../../data/mocks/mockServer';
+import { checkSkillsMatch } from '../domain/usecases/checkSkillsMatch';
+import { resumes } from '../data/mocks/resumes';
+import { mockServer } from '../data/mocks/mockServer';
 
 export const useApplicationFlow = (vacancyId: string) => {
   const [modalStep, setModalStep] = useState<'hidden' | 'confirm' | 'warning' | 'success' | 'error'>('hidden');
