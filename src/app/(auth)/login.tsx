@@ -13,70 +13,96 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 
+type Resume = {
+  id: string;
+  title: string;
+  about: string;
+  skills: string[];
+};
+
+type VacancyResponse = {
+  vacancyId: string;
+  vacancyTitle: string;
+  respondedAt: string;
+};
+
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  resumes: Resume[];
+  favoriteVacancies: string[];
+  responses: VacancyResponse[];
+};
+
+const USERS_KEY = 'USERS';
+const CURRENT_USER_ID_KEY = 'CURRENT_USER_ID';
+const REMEMBERED_EMAIL_KEY = 'REMEMBERED_EMAIL';
+const REMEMBERED_PASSWORD_KEY = 'REMEMBERED_PASSWORD';
+
 export default function LoginScreen() {
-  // --- Состояния формы ---
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); // Состояние чекбокса
-  const [showPassword, setShowPassword] = useState(false); // Видимость пароля
-  const [error, setError] = useState(''); // Текст ошибки
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
-  // --- Эффект при загрузке экрана ---
   useEffect(() => {
     const loadSavedCredentials = async () => {
       try {
-        // Проверяем, сохранял ли пользователь данные ранее (галочка "Запомнить")
-        const savedEmail = await AsyncStorage.getItem('rememberedEmail');
-        const savedPassword = await AsyncStorage.getItem('rememberedPassword');
+        const savedEmail = await AsyncStorage.getItem(REMEMBERED_EMAIL_KEY);
+        const savedPassword = await AsyncStorage.getItem(REMEMBERED_PASSWORD_KEY);
 
         if (savedEmail && savedPassword) {
-          // Если данные есть, подставляем их в поля автоматически
           setEmailOrPhone(savedEmail);
           setPassword(savedPassword);
-          setRememberMe(true); // Включаем галочку обратно
+          setRememberMe(true);
         }
       } catch (e) {
-        console.error("Ошибка загрузки данных:", e);
+        console.error('Ошибка загрузки данных:', e);
       }
     };
+
     loadSavedCredentials();
-  }, []); // Пустой массив [] значит, что код сработает 1 раз при открытии
+  }, []);
 
-  // --- Функция входа ---
   const handleLogin = async () => {
-    setError(''); // Сброс старой ошибки
+    setError('');
 
-    if (!emailOrPhone || !password) {
+    if (!emailOrPhone.trim() || !password) {
       setError('Заполните все поля');
       return;
     }
 
     try {
-      // Извлекаем данные, которые пользователь указал при регистрации
-      const registeredEmail = await AsyncStorage.getItem('userEmail');
-      const registeredPassword = await AsyncStorage.getItem('userPassword');
+      const rawUsers = await AsyncStorage.getItem(USERS_KEY);
+      const users: User[] = rawUsers ? JSON.parse(rawUsers) : [];
 
-      // Проверяем совпадение введенных данных с регистрационными
-      if (emailOrPhone === registeredEmail && password === registeredPassword) {
+      const normalizedEmail = emailOrPhone.trim().toLowerCase();
 
-        // Логика чекбокса "Запомнить меня"
-        if (rememberMe) {
-          // Если галочка стоит — сохраняем логин/пароль для следующего раза
-          await AsyncStorage.setItem('rememberedEmail', emailOrPhone);
-          await AsyncStorage.setItem('rememberedPassword', password);
-        } else {
-          // Если галочка снята — удаляем сохраненные данные из памяти
-          await AsyncStorage.removeItem('rememberedEmail');
-          await AsyncStorage.removeItem('rememberedPassword');
-        }
+      const foundUser = users.find(
+        (user) =>
+          user.email.toLowerCase() === normalizedEmail &&
+          user.password === password
+      );
 
-        // Мы НЕ сохраняем 'userToken' в этом сценарии.
-        //  при перезагрузке приложения RootLayout снова
-        // отправит пользователя сюда, но поля уже будут заполнены.
-        router.replace('/(tabs)');
-      } else {
+      if (!foundUser) {
         setError('Неверный email или пароль');
+        return;
       }
+
+      await AsyncStorage.setItem(CURRENT_USER_ID_KEY, foundUser.id);
+
+      if (rememberMe) {
+        await AsyncStorage.setItem(REMEMBERED_EMAIL_KEY, normalizedEmail);
+        await AsyncStorage.setItem(REMEMBERED_PASSWORD_KEY, password);
+      } else {
+        await AsyncStorage.removeItem(REMEMBERED_EMAIL_KEY);
+        await AsyncStorage.removeItem(REMEMBERED_PASSWORD_KEY);
+      }
+
+      router.replace('/(tabs)');
     } catch (e) {
       setError('Ошибка входа');
     }
@@ -91,27 +117,27 @@ export default function LoginScreen() {
         <View style={styles.inner}>
           <Text style={styles.title}>Вход</Text>
 
-          {/* Вывод сообщения об ошибке */}
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 
-          {/* Поле Email */}
           <View style={styles.field}>
-            <Text style={styles.label}>Email / Номер телефона</Text>
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={[styles.input, error ? styles.inputError : null]}
-              placeholder="Введите email или номер телефона"
+              placeholder="Введите email"
               value={emailOrPhone}
-              onChangeText={(text) => { setEmailOrPhone(text); setError(''); }}
+              onChangeText={(text) => {
+                setEmailOrPhone(text);
+                setError('');
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
           </View>
 
-          {/* Поле Пароль с "глазком" */}
           <View style={styles.field}>
             <Text style={styles.label}>Пароль</Text>
             <View style={styles.passwordWrapper}>
@@ -119,7 +145,10 @@ export default function LoginScreen() {
                 style={[styles.input, error ? styles.inputError : null]}
                 placeholder="Введите пароль"
                 value={password}
-                onChangeText={(text) => { setPassword(text); setError(''); }}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setError('');
+                }}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
@@ -131,7 +160,6 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Кастомный чекбокс "Запомнить меня" */}
           <Pressable
             style={styles.rememberRow}
             onPress={() => setRememberMe(!rememberMe)}
@@ -142,17 +170,16 @@ export default function LoginScreen() {
             <Text style={styles.rememberText}>Запомнить данные для входа</Text>
           </Pressable>
 
-          {/* Кнопка входа */}
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Войти</Text>
           </TouchableOpacity>
 
-          {/* Ссылки на регистрацию и сброс пароля */}
           <View style={styles.links}>
             <Pressable onPress={() => router.push('/(auth)/register')}>
               <Text style={styles.link}>Регистрация</Text>
             </Pressable>
-            <Pressable onPress={() => router.push('/(auth)/forgotpassword')}>
+
+            <Pressable onPress={() => {}}>
               <Text style={styles.link}>Забыли пароль?</Text>
             </Pressable>
           </View>
@@ -162,25 +189,24 @@ export default function LoginScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   inner: {
     paddingHorizontal: 32,
-    paddingVertical: 40
+    paddingVertical: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 48
+    marginBottom: 48,
   },
   errorContainer: {
     backgroundColor: '#FFEBEE',
@@ -188,22 +214,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#FFCDD2'
+    borderColor: '#FFCDD2',
   },
   errorText: {
     color: '#D32F2F',
     textAlign: 'center',
     fontSize: 14,
-    fontWeight: '500'
+    fontWeight: '500',
   },
   field: {
-    marginBottom: 24
+    marginBottom: 24,
   },
   label: {
     fontSize: 16,
     color: '#333',
     marginBottom: 8,
-    fontWeight: '500'
+    fontWeight: '500',
   },
   input: {
     height: 52,
@@ -212,26 +238,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0'
+    borderColor: '#e0e0e0',
   },
   inputError: {
-    borderColor: '#D32F2F'
+    borderColor: '#D32F2F',
   },
   passwordWrapper: {
-    position: 'relative'
+    position: 'relative',
   },
   eye: {
     position: 'absolute',
     right: 16,
-    top: 14
+    top: 14,
   },
   eyeText: {
-    fontSize: 20
+    fontSize: 20,
   },
   rememberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32
+    marginBottom: 32,
   },
   checkbox: {
     width: 22,
@@ -241,19 +267,19 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
     marginRight: 12,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#007AFF'
+    backgroundColor: '#007AFF',
   },
   checkmark: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   rememberText: {
     fontSize: 16,
-    color: '#333'
+    color: '#333',
   },
   button: {
     backgroundColor: '#007AFF',
@@ -261,19 +287,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24
+    marginBottom: 24,
   },
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   links: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   link: {
     color: '#007AFF',
-    fontSize: 15
+    fontSize: 15,
   },
 });
