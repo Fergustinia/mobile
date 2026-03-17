@@ -13,67 +13,126 @@ import {
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+type Resume = {
+  id: string;
+  title: string;
+  about: string;
+  skills: string[];
+};
+
+type VacancyResponse = {
+  vacancyId: string;
+  vacancyTitle: string;
+  respondedAt: string;
+};
+
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  resumes: Resume[];
+  favoriteVacancies: string[];
+  responses: VacancyResponse[];
+};
+
+const USERS_KEY = 'USERS';
+
 export default function RegisterScreen() {
-  // --- Состояния формы ---
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // --- Состояния интерфейса ---
-  const [loading, setLoading] = useState(false); // Для индикатора загрузки на кнопке
-  const [error, setError] = useState('');       // Для хранения текста ошибки
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // --- Состояния видимости паролей (глазки) ---
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Функция валидации
   const validate = () => {
     if (!name.trim()) return 'Введите имя';
     if (!email.trim()) return 'Введите email';
-    // Простая проверка формата email через регулярное выражение
     if (!/\S+@\S+\.\S+/.test(email)) return 'Некорректный email';
     if (password.length < 6) return 'Пароль должен быть минимум 6 символов';
     if (password !== confirmPassword) return 'Пароли не совпадают';
-    return ''; // Ошибок нет
+    return '';
   };
 
-  // Основная функция регистрации
+  const getUsers = async (): Promise<User[]> => {
+    try {
+      const raw = await AsyncStorage.getItem(USERS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  };
+
   const handleRegister = async () => {
     const validationError = validate();
     if (validationError) {
-      setError(validationError); // Показываем ошибку валидации
+      setError(validationError);
       return;
     }
 
-    setLoading(true); // Включаем "крутилку" на кнопке
-    setError('');     // Сбрасываем старые ошибки
+    setLoading(true);
+    setError('');
 
     try {
-      // Имитируем сетевую задержку (1.5 секунды)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const users = await getUsers();
+      const normalizedEmail = email.trim().toLowerCase();
 
-      // Сохраняем данные пользователя в AsyncStorage (локальная база данных)
-      await AsyncStorage.setItem('userName', name);
-      await AsyncStorage.setItem('userEmail', email);
-      await AsyncStorage.setItem('userPassword', password);
+      const existingUser = users.find(
+        (user) => user.email.toLowerCase() === normalizedEmail
+      );
 
-      // После успешной регистрации отправляем пользователя на экран входа
+      if (existingUser) {
+        setError('Пользователь с таким email уже существует');
+        setLoading(false);
+        return;
+      }
+
+      const newUser: User = {
+        id: Date.now().toString(),
+        name: name.trim(),
+        email: normalizedEmail,
+        password,
+        resumes: [],
+        favoriteVacancies: [],
+        responses: [],
+      };
+
+      const updatedUsers = [...users, newUser];
+
+      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+
       router.replace('/(auth)/login');
-    } catch (err) {
-      // Сработает, если, например, память телефона переполнена
+    } catch {
       setError('Ошибка регистрации. Попробуйте позже.');
     } finally {
-      setLoading(false); // Выключаем "крутилку" в любом случае
+      setLoading(false);
     }
   };
 
-  // Функции-помощники для обновления текста (сразу убирают ошибку при начале ввода)
-  const handleChangeName = (text: string) => { setName(text); if (error) setError(''); };
-  const handleChangeEmail = (text: string) => { setEmail(text); if (error) setError(''); };
-  const handleChangePass = (text: string) => { setPassword(text); if (error) setError(''); };
-  const handleChangeConfirm = (text: string) => { setConfirmPassword(text); if (error) setError(''); };
+  const handleChangeName = (text: string) => {
+    setName(text);
+    if (error) setError('');
+  };
+
+  const handleChangeEmail = (text: string) => {
+    setEmail(text);
+    if (error) setError('');
+  };
+
+  const handleChangePass = (text: string) => {
+    setPassword(text);
+    if (error) setError('');
+  };
+
+  const handleChangeConfirm = (text: string) => {
+    setConfirmPassword(text);
+    if (error) setError('');
+  };
 
   return (
     <KeyboardAvoidingView
@@ -84,14 +143,12 @@ export default function RegisterScreen() {
         <View style={styles.inner}>
           <Text style={styles.title}>Регистрация</Text>
 
-          {/* Блок для вывода ошибок (показывается только если error не пустой) */}
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 
-          {/* Поле Имя */}
           <View style={styles.field}>
             <Text style={styles.label}>Имя</Text>
             <TextInput
@@ -102,7 +159,6 @@ export default function RegisterScreen() {
             />
           </View>
 
-          {/* Поле Email */}
           <View style={styles.field}>
             <Text style={styles.label}>Email</Text>
             <TextInput
@@ -115,16 +171,18 @@ export default function RegisterScreen() {
             />
           </View>
 
-          {/* Поле Пароль с кнопкой показа/скрытия */}
           <View style={styles.field}>
             <Text style={styles.label}>Пароль</Text>
             <View style={styles.passwordWrapper}>
               <TextInput
-                style={[styles.input, error && password.length < 6 ? styles.inputError : null]}
+                style={[
+                  styles.input,
+                  error && password.length < 6 ? styles.inputError : null,
+                ]}
                 placeholder="Минимум 6 символов"
                 value={password}
                 onChangeText={handleChangePass}
-                secureTextEntry={!showPassword} // Скрывает текст звездочками
+                secureTextEntry={!showPassword}
               />
               <TouchableOpacity
                 style={styles.eye}
@@ -135,12 +193,14 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          {/* Поле Подтверждение пароля */}
           <View style={styles.field}>
             <Text style={styles.label}>Подтвердите пароль</Text>
             <View style={styles.passwordWrapper}>
               <TextInput
-                style={[styles.input, error && password !== confirmPassword ? styles.inputError : null]}
+                style={[
+                  styles.input,
+                  error && password !== confirmPassword ? styles.inputError : null,
+                ]}
                 placeholder="Повторите пароль"
                 value={confirmPassword}
                 onChangeText={handleChangeConfirm}
@@ -150,16 +210,17 @@ export default function RegisterScreen() {
                 style={styles.eye}
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
               >
-                <Text style={styles.eyeText}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+                <Text style={styles.eyeText}>
+                  {showConfirmPassword ? '🙈' : '👁️'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Кнопка создания аккаунта */}
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleRegister}
-            disabled={loading} // Блокируем кнопку на время загрузки
+            disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -168,8 +229,7 @@ export default function RegisterScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Кнопка возврата на экран логина */}
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
             <Text style={styles.link}>Уже есть аккаунт? Войти</Text>
           </TouchableOpacity>
         </View>
@@ -181,22 +241,22 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   inner: {
     paddingHorizontal: 32,
-    paddingVertical: 40
+    paddingVertical: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 40,
-    color: '#000'
+    color: '#000',
   },
   errorContainer: {
     backgroundColor: '#FFEBEE',
@@ -204,22 +264,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#FFCDD2'
+    borderColor: '#FFCDD2',
   },
   errorText: {
     color: '#D32F2F',
     textAlign: 'center',
     fontSize: 14,
-    fontWeight: '500'
+    fontWeight: '500',
   },
   field: {
-    marginBottom: 20
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
     color: '#333',
     marginBottom: 8,
-    fontWeight: '500'
+    fontWeight: '500',
   },
   input: {
     height: 52,
@@ -228,21 +288,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0'
+    borderColor: '#e0e0e0',
   },
   inputError: {
-    borderColor: '#D32F2F' // Красная рамка при ошибке
+    borderColor: '#D32F2F',
   },
   passwordWrapper: {
     position: 'relative',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   eye: {
     position: 'absolute',
-    right: 16
+    right: 16,
   },
   eyeText: {
-    fontSize: 20
+    fontSize: 20,
   },
   button: {
     backgroundColor: '#007AFF',
@@ -250,20 +310,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20
+    marginTop: 20,
   },
   buttonDisabled: {
-    backgroundColor: '#ccc' // Серая кнопка, когда идет загрузка
+    backgroundColor: '#ccc',
   },
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600'
+    fontWeight: '600',
   },
   link: {
     color: '#007AFF',
     textAlign: 'center',
     marginTop: 24,
-    fontSize: 16
+    fontSize: 16,
   },
 });
