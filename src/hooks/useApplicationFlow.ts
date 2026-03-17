@@ -1,11 +1,11 @@
 // mobile/ui/hooks/useApplicationFlow.ts
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 
 // Домен и данные
-import { checkSkillsMatch } from '../domain/usecases/checkSkillsMatch';
-import { resumes } from '../data/mocks/resumes';
 import { mockServer } from '../data/mocks/mockServer';
+import { resumes } from '../data/mocks/resumes';
+import { checkSkillsMatch } from '../domain/usecases/checkSkillsMatch';
 
 export const useApplicationFlow = (vacancyId: string) => {
   const [modalStep, setModalStep] = useState<'hidden' | 'confirm' | 'warning' | 'success' | 'error'>('hidden');
