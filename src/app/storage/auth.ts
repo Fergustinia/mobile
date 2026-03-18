@@ -10,6 +10,9 @@ export type Resume = {
 export type VacancyResponse = {
   vacancyId: string;
   respondedAt: string;
+  vacancyTitle: string;
+  company: string;
+  status: string;
 };
 
 export type User = {
