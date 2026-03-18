@@ -1,3 +1,4 @@
+import { Picker } from '@react-native-picker/picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -109,10 +110,9 @@ export const ResumeForm: React.FC = () => {
     handleSave();
   };
 
- const handleCancel = () => {
-  console.log('🔵 Отмена нажата!');
-  router.back(); // Сразу назад без Alert
-};
+  const handleCancel = () => {
+    router.back();
+  };
 
   // 🔄 Loading State
   if (formState === 'loading') {
@@ -144,33 +144,23 @@ export const ResumeForm: React.FC = () => {
       </View>
 
       <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
-        {/* Шаблоны */}
+        {/* Шаблоны — ВЫПАДАЮЩИЙ СПИСОК */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Шаблоны</Text>
-          <View style={styles.templatesGrid}>
-            {RESUME_TEMPLATES.map((template) => (
-              <TouchableOpacity
-                key={template.id}
-                style={[
-                  styles.templateCard,
-                  selectedTemplate === template.id && styles.templateCardSelected,
-                  { borderColor: template.color },
-                ]}
-                onPress={() => {
-                  console.log('🟢 Выбран шаблон:', template.id);
-                  setSelectedTemplate(template.id);
-                }}
-                activeOpacity={0.7} // ✅ Добавлено для визуального отклика
-              >
-                <View 
-                  style={[
-                    styles.templateDot, 
-                    { backgroundColor: template.color }
-                  ]} 
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedTemplate}
+              onValueChange={(itemValue) => setSelectedTemplate(itemValue)}
+              style={styles.picker}
+            >
+              {RESUME_TEMPLATES.map((template) => (
+                <Picker.Item
+                  key={template.id}
+                  label={template.name}
+                  value={template.id}
                 />
-                <Text style={styles.templateName}>{template.name}</Text>
-              </TouchableOpacity>
-            ))}
+              ))}
+            </Picker>
           </View>
         </View>
 
@@ -251,7 +241,7 @@ export const ResumeForm: React.FC = () => {
         <TouchableOpacity 
           style={styles.cancelButton} 
           onPress={handleCancel}
-          activeOpacity={0.7} // ✅ Добавлено для визуального отклика
+          activeOpacity={0.7}
         >
           <Text style={styles.cancelButtonText}>Отменить</Text>
         </TouchableOpacity>
@@ -259,7 +249,7 @@ export const ResumeForm: React.FC = () => {
         <TouchableOpacity 
           style={styles.saveButton} 
           onPress={handleSave}
-          activeOpacity={0.7} // ✅ Добавлено для визуального отклика
+          activeOpacity={0.7}
         >
           <Text style={styles.saveButtonText}>Сохранить</Text>
         </TouchableOpacity>
@@ -294,37 +284,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#000000',
-    marginBottom: 12,
-  },
-  templatesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  templateCard: {
-    width: '48%',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E5E5E5',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-  },
-  templateCardSelected: {
-    backgroundColor: '#F0F7FF',
-  },
-  templateDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
     marginBottom: 8,
   },
-  templateName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000000',
-    textAlign: 'center',
+  // 📋 Стили для выпадающего списка
+  pickerContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    overflow: 'hidden',
   },
+  picker: {
+    height: 50,
+    color: '#000000',
+  },
+  // Остальные стили
   field: {
     marginBottom: 20,
   },
