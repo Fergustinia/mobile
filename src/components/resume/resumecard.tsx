@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Resume } from '../../data/mocks/resumes';
+import { Resume } from '../../data/mocks/resumesdata';
 import { MenuItem, ResumeMenu } from './resumemenu';
 
 interface ResumeCardProps {

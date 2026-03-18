@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { ResumeListScreen } from '../../../components/resume/resumecard';
 import ErrorView from '../../../components/ui/state/Error';
-import { Resume } from '../../../data/mocks/resumes';
+import { Resume } from '../../../data/mocks/resumesdata';
 import { resumeStorage } from '../../storage/resume';
 
 type ScreenState = 'loading' | 'error' | 'success';

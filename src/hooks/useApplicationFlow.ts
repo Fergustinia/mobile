@@ -1,16 +1,23 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { getCurrentUser, updateUser, VacancyResponse } from '../app/storage/auth';
-
-// Домен и данные
-import { mockServer } from '../data/mocks/mockServer';
-import { resumes } from '../data/mocks/resumes';
-import { checkSkillsMatch } from '../domain/usecases/checkSkillsMatch';
+import { resumeStorage } from '@/app/storage/resume';
 
 export const useApplicationFlow = (vacancyId: string) => {
   const [modalStep, setModalStep] = useState<'hidden' | 'confirm' | 'warning' | 'success' | 'error'>('hidden');
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [availableResumes, setAvailableResumes] = useState<any[]>([]);
+
+  // 🔥 ЗАГРУЗКА РЕЗЮМЕ ИЗ STORAGE
+  useEffect(() => {
+    const load = async () => {
+      const data = await resumeStorage.getAll();
+      setAvailableResumes(data);
+    };
+
+    load();
+  }, []);
 
   const startApplication = useCallback(() => {
     setModalStep('confirm');
@@ -22,30 +29,25 @@ export const useApplicationFlow = (vacancyId: string) => {
     setSelectedResumeId('');
   }, []);
 
-
   const saveApplicationLocally = async () => {
-    try {
-      const user = await getCurrentUser();
-      if (user) {
-        const newResponse: VacancyResponse = {
-          vacancyId: vacancyId,
-          vacancyTitle: "React Native Developer", // В будущем можно передавать как аргумент
-          company: "TechCorp",
-          respondedAt: new Date().toLocaleDateString('ru-RU'),
-          status: 'Рассматривается',
-        };
+    const user = await getCurrentUser();
+    if (!user) return;
 
-        // Добавляем отклик, если его еще нет в списке
-        const alreadyExists = user.responses?.some(r => r.vacancyId === vacancyId);
-        if (!alreadyExists) {
-          user.responses = [...(user.responses || []), newResponse];
-          await updateUser(user);
-          console.log('Отклик успешно сохранен в AsyncStorage');
-        }
-      }
-    } catch (e) {
-      console.error('Ошибка сохранения отклика:', e);
-    }
+    const alreadyExists = user.responses?.some(r => r.vacancyId === vacancyId);
+    if (alreadyExists) return;
+
+    const newResponse: VacancyResponse = {
+      vacancyId,
+      vacancyTitle: "React Native Developer",
+      company: "TechCorp",
+      respondedAt: new Date().toLocaleDateString('ru-RU'),
+      status: 'Рассматривается',
+    };
+
+    await updateUser({
+      ...user,
+      responses: [...(user.responses || []), newResponse],
+    });
   };
 
   const handleConfirmResume = useCallback(async () => {
@@ -57,65 +59,62 @@ export const useApplicationFlow = (vacancyId: string) => {
     setLoading(true);
 
     try {
-      const serverResumes = await mockServer.fetchResumes();
-      const resume = serverResumes.find(r => r.id === selectedResumeId);
+      const resumes = await resumeStorage.getAll();
+      const selectedResume = resumes.find(r => r.id === selectedResumeId);
 
-      if (!resume) {
-        Alert.alert('Ошибка', 'Резюме не найдено');
-        setLoading(false);
-        return;
+      if (!selectedResume) {
+        throw new Error('Резюме не найдено');
       }
 
-      const { isMatch } = checkSkillsMatch(resume);
-
-      setLoading(false);
-
+      // 🚫 ПРОВЕРКА НАВЫКОВ ВРЕМЕННО ОТКЛЮЧЕНА
+      /*
+      const { isMatch } = checkSkillsMatch(selectedResume);
       if (!isMatch) {
         setModalStep('warning');
-      } else {
-        // Если навыки подходят, вызываем отправку
-        await submitApplication();
+        return;
       }
-    } catch (err) {
-      setLoading(false);
-      Alert.alert('Ошибка', 'Не удалось загрузить данные');
-      setModalStep('error');
-    }
-  }, [selectedResumeId, vacancyId]); // Добавили зависимости
+      */
 
+      await submitApplication();
+    } catch (err) {
+      console.error(err);
+      setModalStep('error');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedResumeId]);
 
   const handleIgnoreWarning = useCallback(async () => {
     await submitApplication();
-  }, [vacancyId, selectedResumeId]);
+  }, [selectedResumeId]);
 
   const submitApplication = useCallback(async () => {
     setLoading(true);
 
     try {
-      // Имитация сетевого запроса
-      await mockServer.submitApplication(vacancyId, selectedResumeId);
-
-
+      // ❌ убрали mockServer
+      // теперь просто локально сохраняем
       await saveApplicationLocally();
 
       setModalStep('success');
       Alert.alert('Успех', 'Отклик отправлен!');
-      
+
       setTimeout(cancelApplication, 1500);
     } catch (err) {
+      console.error(err);
       Alert.alert('Ошибка', 'Не удалось отправить отклик');
       setModalStep('error');
     } finally {
       setLoading(false);
     }
-  }, [vacancyId, selectedResumeId, cancelApplication]);
+  }, [selectedResumeId, cancelApplication]);
 
   return {
     modalStep,
     loading,
     selectedResumeId,
     setSelectedResumeId,
-    availableResumes: resumes,
+    availableResumes, // ✅ теперь реальные данные
     startApplication,
     cancelApplication,
     handleConfirmResume,

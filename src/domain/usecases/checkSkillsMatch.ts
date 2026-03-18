@@ -1,4 +1,4 @@
-import type { Resume } from "../../data/mocks/resumes"
+import type { Resume } from "../../data/mocks/resumesdata"
 
 export type SkillsMatchResult = {
   isMatch: boolean

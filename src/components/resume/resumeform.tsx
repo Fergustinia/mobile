@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { resumeStorage } from '../../app/storage/resume';
-import { RESUME_TEMPLATES, TemplateId } from '../../data/mocks/resumes';
+import { RESUME_TEMPLATES, TemplateId } from '../../data/mocks/resumesdata';
 import ErrorView from '../ui/state/Error';
 import LoadingView from '../ui/state/Loading';
 
