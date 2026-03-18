@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import LoadingView from '@/components/ui/state/Loading';
@@ -8,9 +7,23 @@ import NotFoundView from '@/components/ui/state/NotFound';
 
 import { useVacancySearch } from '@/hooks/useVacancySearch';
 
+// Интерфейс для вакансии
+interface Vacancy {
+  id: string;
+  title: string;
+  company: string;
+  description: string;
+  requirements: string;
+  conditions: string;
+  salary: string;
+  workFormat: string;
+  city: string;
+  position: string;
+  employmentType: string;
+  experience: string;
+}
 
 export default function HomeScreen() {
-
   const {
     searchQuery,
     setSearchQuery,
@@ -39,17 +52,17 @@ export default function HomeScreen() {
     return <NotFoundView onRetry={resetFiltersAndSearch} />;
   }
 
+  } = useVacancySearch();
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Главная</Text>
 
-
       <View style={styles.searchSection}>
-
         {/* Кнопка фильтра */}
         <Pressable
           style={styles.filterButton}
-          onPress={openFilterScreen}
+          onPress={openFilterScreen}  // Переход на экран фильтров
         >
           <Ionicons name="options-outline" size={24} color="#fff" />
         </Pressable> 
@@ -68,30 +81,32 @@ export default function HomeScreen() {
           onPress={handleSearch}
           disabled={loading}
         >
-        {loading ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <Ionicons name="search" size={24} color="#fff" />
-        )}
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="search" size={24} color="#fff" />
+          )}
         </Pressable>       
-        
       </View>
 
-      {results.map((vacancy) => (
-        <Pressable
-          key={vacancy.id}
-          style={styles.card}
-          onPress={() => router.push(`/vacancyscreen/${vacancy.id}`)}
-        >
-          <Text style={styles.cardTitle}>{vacancy.title}</Text>
-          <Text style={styles.cardSubtitle}>{vacancy.company}</Text>
-          <Text style={styles.cardSubtitle}>{vacancy.salary}</Text>
-          <Text style={styles.cardSubtitle}>{vacancy.workFormat}</Text>
-          <Text style={styles.cardSubtitle} numberOfLines={2}>{vacancy.description}</Text>
-          
-          <Text style={styles.cardBottom}>Нажмите для подробной информации</Text>
-        </Pressable>
-      ))}
+      {/* Рендерим вакансии */}
+      {results.length === 0 ? (
+        <Text>Нет вакансий по заданным параметрам</Text>
+      ) : (
+        results.map((vacancy: Vacancy) => (
+          <Pressable
+            key={vacancy.id}
+            style={styles.card}
+            onPress={() => router.push(`/vacancyscreen/${vacancy.id}`)}  // Переход на страницу с вакансией
+          >
+            <Text style={styles.cardTitle}>{vacancy.title}</Text>
+            <Text style={styles.cardSubtitle}>{vacancy.company}</Text>
+            <Text style={styles.cardSubtitle}>{vacancy.salary}</Text>
+            <Text style={styles.cardSubtitle}>{vacancy.workFormat}</Text>
+            <Text style={styles.cardBottom}>Нажмите для подробной информации</Text>
+          </Pressable>
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -110,20 +125,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 8,
   },
-  button: {
-    backgroundColor: '#111',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
   card: {
     padding: 16,
     borderRadius: 14,
     backgroundColor: '#f3f4f6',
+    marginBottom: 12,
   },
   cardTitle: {
     fontSize: 18,
@@ -133,8 +139,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
     color: '#666',
   },
-  
-
   input: {
     flex: 1,            
     height: 48,
@@ -161,7 +165,7 @@ const styles = StyleSheet.create({
     height: 48,               
     borderRadius: 8,
     marginRight: 8,          
-},
+  },
   filterButton: {
     backgroundColor: '#6c757d', 
     justifyContent: 'center',
@@ -170,15 +174,10 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 8,
     marginRight: 12,
-},
-searchButtonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: '600',
-},
-cardBottom: {
-  marginTop: 6,
-  color: '#1a1919',
-  fontSize: 16,
-
-}});
+  },
+  cardBottom: {
+    marginTop: 6,
+    color: '#1a1919',
+    fontSize: 16,
+  },
+});

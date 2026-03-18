@@ -1,7 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-
 import {
   Image,
   Modal,
@@ -16,9 +15,19 @@ import ErrorView from '@/components/ui/state/Error';
 import LoadingView from '@/components/ui/state/Loading';
 import { useApplicationFlow } from '../../../hooks/useApplicationFlow';
 
+// Импорт данных о вакансиях
+import { allVacancies } from '@/data/mocks/vacancydata'; // Убедитесь, что путь корректный
+
 export default function VacancyDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
-  const vacancyId = Array.isArray(params.id) ? params.id[0] : params.id || 'vacancy_123';
+  const vacancyId = Array.isArray(params.id) ? params.id[0] : params.id;
+
+  // Получаем вакансию по ID
+  const vacancy = allVacancies.find(v => v.id === vacancyId);
+
+  if (!vacancy) {
+    return undefined;
+  }
 
   const {
     modalStep,
@@ -106,7 +115,7 @@ export default function VacancyDetailScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/')}>
           <Text style={styles.backText}>← Назад</Text>
         </TouchableOpacity>
       </View>
@@ -120,21 +129,21 @@ export default function VacancyDetailScreen() {
             />
           </View>
 
-          <Text style={styles.title}>React Native Developer</Text>
+          <Text style={styles.title}>{vacancy.title}</Text>
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Компания</Text>
-            <Text style={styles.value}>TechCorp</Text>
+            <Text style={styles.value}>{vacancy.company}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Зарплата</Text>
-            <Text style={styles.value}>от 150 000 ₽</Text>
+            <Text style={styles.value}>{vacancy.salary}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Город / формат</Text>
-            <Text style={styles.value}>Москва • Гибрид</Text>
+            <Text style={styles.value}>{vacancy.city} • {vacancy.workFormat}</Text>
           </View>
 
           <TouchableOpacity
@@ -143,46 +152,24 @@ export default function VacancyDetailScreen() {
             disabled={modalStep !== 'hidden'}
           >
             <Text style={styles.applyButtonText}>
-            {loading ? 'Отправка...' : 'Откликнуться'}
+              {loading ? 'Отправка...' : 'Откликнуться'}
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Описание</Text>
-          <Text style={styles.sectionText}>
-            Мы ищем опытного React Native разработчика для создания мобильных приложений.
-            Вы будете работать над продуктом, которым пользуются тысячи людей.
-            {'\n'}
-            {'\n'}• Разработка новых функций
-            {'\n'}• Оптимизация производительности
-            {'\n'}• Code review и менторство
-            {'\n'}• Участие в архитектурных решениях
-          </Text>
+          <Text style={styles.sectionText}>{vacancy.description}</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Требования</Text>
-          <Text style={styles.sectionText}>
-            • Опыт коммерческой разработки от 2 лет
-            {'\n'}• Уверенное знание React / React Native
-            {'\n'}• Понимание принципов работы мобильных ОС
-            {'\n'}• Опыт работы с TypeScript
-            {'\n'}• Знание паттернов проектирования
-            {'\n'}• Английский язык — не ниже B1
-          </Text>
+          <Text style={styles.sectionText}>{vacancy.requirements}</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Условия</Text>
-          <Text style={styles.sectionText}>
-            • Конкурентная зарплата и ежегодный пересмотр
-            {'\n'}• ДМС со стоматологией
-            {'\n'}• Гибкий график и возможность удалёнки
-            {'\n'}• Обучение за счёт компании
-            {'\n'}• Современный офис в центре Москвы
-            {'\n'}• Крутая команда и интересные задачи
-          </Text>
+          <Text style={styles.sectionText}>{vacancy.conditions}</Text>
         </View>
       </ScrollView>
 

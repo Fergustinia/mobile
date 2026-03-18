@@ -5,11 +5,17 @@ export default function ResumeLayout() {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{ headerShown: false }}
+        options={{ 
+          title: 'Мое резюме',
+          headerShown: true,
+        }}
       />
       <Stack.Screen
         name="create"
-        options={{ headerShown: false }}
+        options={{ 
+          title: 'Создание резюме',
+          headerShown: true,
+        }}
       />
     </Stack>
   );
