@@ -1,5 +1,6 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { resumeStorage } from '../../../app/storage/resume';
 import { ResumeListScreen } from '../../../components/resume/resumecard';
@@ -13,19 +14,26 @@ export default function ResumeScreen() {
   const [screenState, setScreenState] = useState<ScreenState>('loading');
 
   const loadResumes = useCallback(async () => {
+    console.log('🔄 Загрузка списка резюме...');
     setScreenState('loading');
     try {
       const data = await resumeStorage.getAll();
+      console.log('✅ Загружено резюме:', data.length);
       setResumes(data);
       setScreenState('success');
     } catch (error) {
+      console.error('❌ Ошибка загрузки:', error);
       setScreenState('error');
     }
   }, []);
 
-  React.useEffect(() => {
-    loadResumes();
-  }, []);
+  // 🎯 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: useFocusEffect
+  // Перезагружает список каждый раз, когда экран становится активным
+  useFocusEffect(
+    useCallback(() => {
+      loadResumes();
+    }, [loadResumes])
+  );
 
   const handleResumePress = (resume: Resume) => {
     router.push({
@@ -55,7 +63,7 @@ export default function ResumeScreen() {
                   onPress: async () => {
                     try {
                       await resumeStorage.delete(resume.id);
-                      loadResumes();
+                      await loadResumes(); // ✅ Сразу обновляем список
                     } catch {
                       Alert.alert('Ошибка', 'Не удалось удалить резюме');
                     }
@@ -87,7 +95,6 @@ export default function ResumeScreen() {
         isLoading={screenState === 'loading'}
         on_resumePress={handleResumePress}
         on_menuPress={handleMenuPress}
-        onRefresh={loadResumes}
       />
     </View>
   );
