@@ -2,7 +2,7 @@ export const apiMocks = {
   resumes: [
     {
       id: "1",
-      name: "Резюме без опыта (не соответствует)",
+      name: "Резюме без опыта",
       isRecommended: false,
       skills: ["HTML", "CSS"],
       experience: 0,
@@ -56,4 +56,4 @@ export const apiMocks = {
       message: "Отклик успешно отправлен",
     },
   },
-} as const;
+};

@@ -1,22 +1,25 @@
 import { apiMocks } from './api-mocks';
 
+// ✅ Изменили тип: сделали дополнительные поля необязательными (?)
+// и исправили типы skills (массив) и experience (число)
 export type Resume = {
   id: string;
-  name: string;              // Название/профессия
-  fullName: string;          // ФИО
-  experience: string;        // Опыт (текст)
-  skills: string;            // Навыки (текст)
-  education: string;         // Образование
-  contacts: string;          // Контакты
-  template: string;          // Выбранный шаблон
-  isRecommended: boolean;
-  updatedAt?: string;        // Дата обновления
+  name: string;
+  fullName?: string;        // Теперь необязательное (?)
+  experience?: number;      // Теперь число и необязательное (?)
+  skills?: string[];        // Теперь массив и необязательное (?)
+  education?: string;       // Теперь необязательное (?)
+  contacts?: string;        // Теперь необязательное (?)
+  template?: string;        // Теперь необязательное (?)
+  isRecommended?: boolean;
+  updatedAt?: string;
 };
 
-export const resumes: readonly Resume[] = apiMocks.resumes;
+// ✅ Убрали 'readonly' из объявления массива, чтобы типы совпадали
+export const resumes: Resume[] = apiMocks.resumes as Resume[];
+
 export const vacancyMock = apiMocks.vacancy;
 
-// Шаблоны резюме
 export const RESUME_TEMPLATES = [
   { id: 'standard', name: 'Стандартный', color: '#007AFF' },
   { id: 'student', name: 'Для студентов', color: '#4CAF50' },

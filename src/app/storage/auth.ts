@@ -1,11 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// ✅ 1. Импортируем правильный тип Resume из главного файла
+import { Resume } from '../../data/mocks/resumes';
 
-export type Resume = {
-  id: string;
-  title: string;
-  about: string;
-  skills: string[];
-};
+// ❌ 2. УДАЛИТЕ строку: export type Resume = { ... }; (если она там есть)
 
 export type VacancyResponse = {
   vacancyId: string;
@@ -20,7 +17,7 @@ export type User = {
   name: string;
   email: string;
   password: string;
-  resumes: Resume[];
+  resumes: Resume[]; // ✅ Теперь использует импортированный тип
   favoriteVacancies: string[];
   responses: VacancyResponse[];
 };
