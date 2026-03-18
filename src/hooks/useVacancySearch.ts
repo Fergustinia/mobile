@@ -34,35 +34,35 @@ export const useVacancySearch = () => {
   setLoading(true);
   setTimeout(() => {
     const filtered = allVacancies.filter(vacancy => {
-      // Поиск по названию (регистронезависимый)
+      
       const matchesSearch = vacancy.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Фильтр по городу
+      
       const matchesCity = filters.city
         ? vacancy.city?.toLowerCase() === filters.city.toLowerCase()
         : true;
 
-      // Фильтр по должности
+      
       const matchesPosition = filters.position
         ? vacancy.position?.toLowerCase() === filters.position.toLowerCase()
         : true;
 
-      // Фильтр по формату работы
+      
       const matchesWorkFormat = filters.workFormat
         ? vacancy.workFormat?.toLowerCase() === filters.workFormat.toLowerCase()
         : true;
 
-      // Фильтр по типу занятости
+      
       const matchesEmploymentType = filters.employmentType
         ? vacancy.employmentType?.toLowerCase() === filters.employmentType.toLowerCase()
         : true;
 
-      // Фильтр по опыту
+      
       const matchesExperience = filters.experience
         ? vacancy.experience?.toLowerCase() === filters.experience.toLowerCase()
         : true;
 
-      // Фильтр по зарплате 
+       
       const matchesSalary = filters.salary
         ? vacancy.salary?.toLowerCase() === filters.salary.toLowerCase()
         : true;

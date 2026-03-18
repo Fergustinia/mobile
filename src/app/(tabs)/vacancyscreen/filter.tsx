@@ -1,79 +1,24 @@
 import { Picker } from '@react-native-picker/picker';
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-//Тоже уберу в моки
-const cities = [
-  { id: 'c1', name: 'Москва' },
-  { id: 'c2', name: 'Санкт-Петербург' },
-  { id: 'c3', name: 'Казань' },
-  { id: 'c4', name: 'Новосибирск' },
-  { id: 'c5', name: 'Екатеринбург' },
-  { id: 'c6', name: 'Томск' },
-];
+import { useFilterSearch } from '@/hooks/useFilterSearch';
 
-const positions = [
-  { id: 'dev', name: 'React Native Developer' },
-  { id: 'front', name: 'Frontend Developer' },
-  { id: 'ui', name: 'UI/UX Designer' },
-  { id: 'ios', name: 'iOS Developer' },
-  { id: 'android', name: 'Android Developer' },
-];
 
-const workFormats = [
-  { id: 'wrk1', name: 'Офис' },
-  { id: 'wrk2', name: 'Удаленно' },
-  { id: 'wrk3', name: 'Гибрид' },
-];
-
-const employmentTypes = [
-  { id: 'emp1', name: 'Полная занятость' },
-  { id: 'emp2', name: 'Частичная занятость' },
-  { id: 'emp3', name: 'Временная работа' },
-  { id: 'emp4', name: 'Стажировка' },
-];
 
 export default function VacancyFilterScreen() {
 
-    // Получаем текущие фильтры из параметров (если они переданы)
-    const params = useLocalSearchParams<{
-      city?: string;
-      position?: string;
-      workFormat?: string;
-      employmentType?: string;
-      experience?: string;
-      salary?: string;
-  }>();
-
-  const applyFilters = () => {
-    // Возвращаемся на главный экран, передавая новые фильтры в параметрах
-    router.replace({
-      pathname: '/',
-      params: {
-        city: selectedCity,
-        position: selectedVacancyType,
-        workFormat: selectedWorkFormat,
-        employmentType: selectedEmploymentType,
-        experience,
-        salary,
-      },
-    });
-  };
-
-
-
-
-    const [selectedCity, setSelectedCity] = useState(params.city || '');
-    const [selectedVacancyType, setSelectedVacancyType] = useState(params.position || '');
-    const [selectedWorkFormat, setSelectedWorkFormat] = useState(params.workFormat || '');
-    const [selectedEmploymentType, setSelectedEmploymentType] = useState(params.employmentType || '');
-    const [experience, setExperience] = useState(params.experience || '');
-    const [salary, setSalary] = useState(params.salary || '');
-
-
-    
-
+  const {
+    selectedCity, setSelectedCity,
+    selectedVacancyType, setSelectedVacancyType,
+    selectedWorkFormat, setSelectedWorkFormat,
+    selectedEmploymentType, setSelectedEmploymentType,
+    experience, setExperience,
+    salary, setSalary,
+    applyFilters,
+    cities, positions, workFormats, employmentTypes,
+    } = useFilterSearch();
+  
 
   return (
     <View style={styles.container}>
