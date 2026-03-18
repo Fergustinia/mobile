@@ -1,33 +1,35 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-const vacancies = [
-  { id: '1', title: 'React Native Developer', company: 'TechCorp', description: 'Мы ищем опытного React Native разработчика для создания мобильных приложений.', salary: 'от 150 000 ₽', workFormat: 'Гибрид' },
-  { id: '2', title: 'Frontend Developer', company: 'TechCorp', description: 'Мы ищем опытного Frontend разработчика для создания веб-приложений.', salary: 'от 100 000 ₽', workFormat: 'Полный день' },
-  { id: '3', title: 'UI/UX Designer', company: 'TechCorp', description: 'Мы ищем талантливого UI/UX дизайнера для создания интуитивно понятных интерфейсов.', salary: 'от 120 000 ₽', workFormat: 'Удаленная работа' },
-];
+import { useVacancySearch } from '@/hooks/useVacancySearch';
 
 
 export default function HomeScreen() {
 
-  /*const {
-      searchQuery,
-      loading,
-      results,
-      error,
-      handleSearch,
-      vacancies,
-    
-    } = useVacancySearch();*/
+  const {
+    searchQuery,
+    setSearchQuery,
+    filters,
+    setFilters,
+    loading,
+    results,
+    handleSearch,
+    openFilterScreen,
+
+  } = useVacancySearch();
+
   
-  const loading = false;
+  //const loading = false;
+
+  const renderModalContent = () =>{
+
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Главная</Text>
-
-
 
 
       <View style={styles.searchSection}>
@@ -35,27 +37,24 @@ export default function HomeScreen() {
         {/* Кнопка фильтра */}
         <Pressable
           style={styles.filterButton}
-          onPress={() => router.push('/vacancyscreen/filter')}
+          onPress={openFilterScreen}
         >
           <Ionicons name="options-outline" size={24} color="#fff" />
         </Pressable> 
 
-
         <TextInput
           style={styles.input}
           placeholder="Поиск"
-          //value={searchQuery}
-          //onChangeText={setSearchQuery}
-          //onSubmitEditing={handleSearch}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
           returnKeyType="search"
-        /> 
-
-
+        />
 
         <Pressable
-        style={styles.searchButton}
-        //onPress={handleSearch}
-        //disabled={loading}
+          style={styles.searchButton}
+          onPress={handleSearch}
+          disabled={loading}
         >
         {loading ? (
           <ActivityIndicator size="small" color="#fff" />
@@ -66,8 +65,7 @@ export default function HomeScreen() {
         
       </View>
 
-
-      {vacancies.map((vacancy) => (
+      {results.map((vacancy) => (
         <Pressable
           key={vacancy.id}
           style={styles.card}
