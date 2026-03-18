@@ -35,4 +35,28 @@ export const allVacancies = [
       employmentType: 'Полная занятость', 
       experience: '4'
     },
+    { 
+      id: 'vacancy_126', 
+      title: 'Backend Developer', 
+      company: 'DevSolutions', 
+      description: 'Мы ищем опытного Backend разработчика для создания серверных решений.', 
+      salary: 'от 160 000 ₽', 
+      workFormat: 'Удаленно', 
+      city: 'Санкт-Петербург', 
+      position: 'Backend Developer', 
+      employmentType: 'Полная занятость', 
+      experience: '5'
+    },
+    { 
+      id: 'vacancy_127', 
+      title: 'Product Manager', 
+      company: 'InnovateTech', 
+      description: 'Ищем опытного менеджера продуктов для разработки новых решений.', 
+      salary: 'от 180 000 ₽', 
+      workFormat: 'Гибрид', 
+      city: 'Москва', 
+      position: 'Product Manager', 
+      employmentType: 'Полная занятость', 
+      experience: '6'
+    }
   ];
