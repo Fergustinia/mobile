@@ -111,7 +111,18 @@ export const useVacancySearch = () => {
         salary: salary || '',
       });
     }
-  }, [city, position, workFormat, employmentType, experience, salary]);    
+  }, [city, position, workFormat, employmentType, experience, salary]);  
+  
+  const resetFiltersAndSearch = () => {
+    setFilters({
+      city: '',
+      position: '',
+      workFormat: '',
+      employmentType: '',
+      experience: '',
+      salary: '',
+    });
+  };
 
   return {
     searchQuery,
@@ -122,5 +133,6 @@ export const useVacancySearch = () => {
     results,
     handleSearch,
     openFilterScreen,
+    resetFiltersAndSearch,
   };
 };

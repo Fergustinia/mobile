@@ -3,6 +3,9 @@ import { router } from 'expo-router';
 
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import LoadingView from '@/components/ui/state/Loading';
+import NotFoundView from '@/components/ui/state/NotFound';
+
 import { useVacancySearch } from '@/hooks/useVacancySearch';
 
 
@@ -17,14 +20,23 @@ export default function HomeScreen() {
     results,
     handleSearch,
     openFilterScreen,
+    resetFiltersAndSearch,
 
   } = useVacancySearch();
 
   
   //const loading = false;
 
-  const renderModalContent = () =>{
+  if (loading) {
+    return <LoadingView />;
+  }
 
+  /*if (error) {
+    return <ErrorView onRetry={handleSearch} />;
+  }*/
+
+  if (results.length === 0) {
+    return <NotFoundView onRetry={resetFiltersAndSearch} />;
   }
 
   return (
