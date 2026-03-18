@@ -100,9 +100,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontWeight: '500',
   },
-  // ✅ ИСПРАВЛЕНО: было destructivItem (без e)
   destructiveItem: {
-    // Можно добавить фон при необходимости
   },
   destructiveText: {
     color: '#FF3B30',
