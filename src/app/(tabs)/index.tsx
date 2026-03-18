@@ -6,6 +6,11 @@ import LoadingView from '@/components/ui/state/Loading';
 import NotFoundView from '@/components/ui/state/NotFound';
 
 import { useVacancySearch } from '@/hooks/useVacancySearch';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
+
+const params = useLocalSearchParams();
+
 
 // Интерфейс для вакансии
 interface Vacancy {
@@ -37,7 +42,20 @@ export default function HomeScreen() {
 
   } = useVacancySearch();
 
+  useEffect(() => {
+    if (!params) return;
   
+    setFilters({
+      city: '',
+      position: '',
+      workFormat: '',
+      employmentType:'',
+      experience:'',
+      salary:'',
+    });
+  
+    handleSearch(); // 🔥 ВАЖНО
+  }, [params]);
   //const loading = false;
 
   if (loading) {
@@ -71,13 +89,13 @@ export default function HomeScreen() {
           placeholder="Поиск"
           value={searchQuery}
           onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
+          onSubmitEditing={() => handleSearch()}
           returnKeyType="search"
         />
 
         <Pressable
           style={styles.searchButton}
-          onPress={handleSearch}
+          onPress={() => handleSearch()} 
           disabled={loading}
         >
           {loading ? (

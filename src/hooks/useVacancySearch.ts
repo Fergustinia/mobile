@@ -1,14 +1,14 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
-import { fetchVacancies, SearchParams } from '../data/mocks/mockServerVacancySearch'; // Импортируем функцию с фильтрацией
+import { router } from 'expo-router';
+import { fetchVacancies, SearchParams } from '../data/mocks/mockServerVacancySearch';
+import { filterStorage } from '@/app/storage/filterStorage';
+import { useFocusEffect } from 'expo-router';
+
 
 interface Vacancy {
   id: string;
   title: string;
   company: string;
-  description?: string;
-  requirements?: string;
-  conditions?: string;
   salary: string;
   workFormat: string;
   city: string;
@@ -27,7 +27,8 @@ interface Filters {
 }
 
 export const useVacancySearch = () => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [filters, setFilters] = useState<Filters>({
     city: '',
     position: '',
@@ -36,21 +37,57 @@ export const useVacancySearch = () => {
     experience: '',
     salary: '',
   });
+
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<Vacancy[]>([]); // Результаты теперь пустые, будут заполняться после фильтрации
+  const [results, setResults] = useState<Vacancy[]>([]);
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSearch = useCallback(() => {
+  // 🔥 загрузка фильтра при старте
+  useEffect(() => {
+    const loadFilters = async () => {
+      const saved = await filterStorage.get();
+      if (saved) {
+        setFilters(saved);
+      }
+    };
+
+    loadFilters();
+  }, []);
+
+
+  useFocusEffect(
+    useCallback(() => {
+      const reloadFilters = async () => {
+        const saved = await filterStorage.get();
+  
+        if (saved) {
+          setFilters(saved);
+        }
+      };
+  
+      reloadFilters();
+    }, [])
+  );
+  
+  // 🔥 поиск
+  const handleSearch = useCallback((customFilters?: Filters) => {
+    const activeFilters = customFilters || filters;
+
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
+
     setLoading(true);
 
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const params: SearchParams = { searchQuery, filters };
-        const data = await fetchVacancies(params); // Вызываем fetchVacancies для получения отфильтрованных данных
+        const params: SearchParams = {
+          searchQuery,
+          filters: activeFilters,
+        };
+
+        const data = await fetchVacancies(params);
         setResults(data);
       } catch (error) {
         console.error('Ошибка загрузки вакансий:', error);
@@ -58,68 +95,33 @@ export const useVacancySearch = () => {
       } finally {
         setLoading(false);
       }
-    }, 500);
+    }, 300);
   }, [searchQuery, filters]);
 
+  // 🔥 авто-поиск при изменении фильтра
   useEffect(() => {
-    handleSearch();
+    handleSearch(filters);
   }, [filters]);
 
+  // 🔥 открыть фильтр
   const openFilterScreen = () => {
-    router.push({
-      pathname: '/vacancyscreen/filter',
-      params: {
-        cityId: filters.city,
-        positionId: filters.position,
-        workFormatId: filters.workFormat,
-        employmentTypeId: filters.employmentType,
-        experience: filters.experience,
-        salary: filters.salary,
-      },
-    });
+    router.push('/vacancyscreen/filter');
   };
 
-  const { city, position, workFormat, employmentType, experience, salary } = useLocalSearchParams<{
-    city?: string;
-    position?: string;
-    workFormat?: string;
-    employmentType?: string;
-    experience?: string;
-    salary?: string;
-  }>();
-
-  const isFirstRender = useRef(true);
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    handleSearch();
-  }, [filters]);
-
-  useEffect(() => {
-    if (city || position || workFormat || employmentType || experience || salary) {
-      setFilters({
-        city: city || '',
-        position: position || '',
-        workFormat: workFormat || '',
-        employmentType: employmentType || '',
-        experience: experience || '',
-        salary: salary || '',
-      });
-    }
-  }, [city, position, workFormat, employmentType, experience, salary]);
-
-  const resetFiltersAndSearch = () => {
-    setFilters({
+  // 🔥 сброс
+  const resetFiltersAndSearch = async () => {
+    const empty: Filters = {
       city: '',
       position: '',
       workFormat: '',
       employmentType: '',
       experience: '',
       salary: '',
-    });
+    };
+
+    setFilters(empty);
+    await filterStorage.clear();
+    handleSearch(empty);
   };
 
   return {
