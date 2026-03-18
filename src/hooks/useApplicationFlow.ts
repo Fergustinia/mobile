@@ -40,8 +40,6 @@ export const useApplicationFlow = (vacancyId: string) => {
 
     const newResponse: VacancyResponse = {
       vacancyId,
-      vacancyTitle: "React Native Developer",
-      company: "TechCorp",
       respondedAt: new Date().toLocaleDateString('ru-RU'),
       status: 'Рассматривается',
     };

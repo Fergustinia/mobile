@@ -4,8 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type VacancyResponse = {
   vacancyId: string;
   respondedAt: string;
-  vacancyTitle: string;
-  company: string;
   status: string;
 };
 
