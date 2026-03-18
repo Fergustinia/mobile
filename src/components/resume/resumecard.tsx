@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Resume } from '../../data/mocks/resumes';
 
@@ -20,28 +20,25 @@ export const ResumeCardItem: React.FC<ResumeCardProps> = ({
   onPress,
   onMenuPress,
 }) => {
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Не указано';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  };
-
   return (
     <View style={styles.card}>
       <TouchableOpacity style={styles.cardContent} onPress={onPress} activeOpacity={0.7}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{resume.name}</Text>
-          <Text style={styles.cardSubtitle}>Название/профессия</Text>
+          {resume.skills && resume.skills.length > 0 && (
+            <Text style={styles.skillsText}>
+              {resume.skills.slice(0, 3).join(', ')}
+              {resume.skills.length > 3 && '...'}
+            </Text>
+          )}
         </View>
         
         <View style={styles.cardFooter}>
-          <Text style={styles.updateDate}>
-            {formatDate(resume.updatedAt)}
-          </Text>
+          {typeof resume.experience === 'number' && (
+            <Text style={styles.experienceText}>
+              {resume.experience} {resume.experience === 1 ? 'год' : 'лет'} опыта
+            </Text>
+          )}
           {resume.isRecommended && (
             <View style={styles.recommendedBadge}>
               <Text style={styles.recommendedText}>Рекомендуемое</Text>
@@ -55,7 +52,7 @@ export const ResumeCardItem: React.FC<ResumeCardProps> = ({
         onPress={onMenuPress}
         activeOpacity={0.7}
       >
-        <Text style={styles.menuIcon}>≡</Text>
+        <Text style={styles.menuIcon}>⋮</Text>
       </TouchableOpacity>
     </View>
   );
@@ -74,17 +71,25 @@ export const ResumeListScreen: React.FC<ResumeListScreenProps> = ({
 }) => {
   const router = useRouter();
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+  if (resumes.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyTitle}>Нет резюме</Text>
+        <Text style={styles.emptyText}>
+          Создайте первое резюме, чтобы начать откликаться на вакансии
+        </Text>
         <TouchableOpacity 
           style={styles.createButton}
-          onPress={() => router.push('/resume/create')}
+          onPress={() => router.push('/(tabs)/resume/create')}
         >
-          <Text style={styles.createButtonText}>Создать новое резюме</Text>
+          <Text style={styles.createButtonText}>Создать резюме</Text>
         </TouchableOpacity>
       </View>
+    );
+  }
 
+  return (
+    <View style={styles.container}>
       <FlatList
         data={resumes}
         keyExtractor={(item) => item.id}
@@ -98,6 +103,13 @@ export const ResumeListScreen: React.FC<ResumeListScreenProps> = ({
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
+      
+      <TouchableOpacity 
+        style={styles.fab}
+        onPress={() => router.push('/(tabs)/resume/create')}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -107,27 +119,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  header: {
-    padding: 16,
-    paddingTop: 8,
-  },
-  createButton: {
-    backgroundColor: '#E8E8E8',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-  },
-  createButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-  },
   listContent: {
     padding: 16,
     gap: 12,
-    paddingBottom: 32,
+    paddingBottom: 80,
+  },
+  emptyContainer: {
+    flex: 1,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  createButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+  },
+  createButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -136,7 +161,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5E5',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     overflow: 'hidden',
   },
   cardContent: {
@@ -152,7 +176,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 4,
   },
-  cardSubtitle: {
+  skillsText: {
     fontSize: 14,
     color: '#8E8E93',
   },
@@ -160,9 +184,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
   },
-  updateDate: {
+  experienceText: {
     fontSize: 14,
     color: '#8E8E93',
   },
@@ -181,14 +204,35 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
     borderLeftWidth: 1,
     borderLeftColor: '#E5E5E5',
-    minWidth: 50,
+    minWidth: 48,
   },
   menuIcon: {
     fontSize: 20,
     color: '#8E8E93',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  fabText: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    fontWeight: '300',
   },
 });
 
