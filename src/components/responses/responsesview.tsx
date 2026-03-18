@@ -5,10 +5,11 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
-  StyleSheet
+  StyleSheet,
+  Pressable
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { getCurrentUser, User, VacancyResponse } from '../../app/storage/auth';
 import LoadingView from '../ui/state/Loading';
 
@@ -58,10 +59,13 @@ export default function ResponsesView() {
         <Text style={styles.detailText}>Компания: {item.company}</Text>
         <Text style={styles.detailText}>Дата отклика: {item.respondedAt}</Text>
         <Text style={styles.detailText}>Статус: {item.status}</Text>
-
-        <TouchableOpacity style={styles.moreButton}>
+  
+        <Pressable
+          style={styles.moreButton}
+          onPress={() => router.push(`/vacancyscreen/${item.vacancyId}`)}  // Переход на страницу с вакансией
+        >
           <Text style={styles.moreButtonText}>Подробнее</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

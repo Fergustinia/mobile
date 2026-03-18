@@ -98,7 +98,7 @@ export default function ProfileScreen() {
       </Pressable>
 
       {/* Кнопка избранного (можно добавить позже) */}
-      <Pressable style={styles.secondaryButton} onPress={() => router.push('/favorites')}>
+      <Pressable style={styles.secondaryButton} onPress={() => router.push('/#')}>
         <Text style={styles.secondaryButtonText}>Избранные вакансии</Text>
       </Pressable>
 
