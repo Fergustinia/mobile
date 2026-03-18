@@ -1,19 +1,25 @@
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
+import { resumeStorage } from '../../../app/storage/resume';
 import { ResumeListScreen } from '../../../components/resume/resumecard';
+import ErrorView from '../../../components/ui/state/Error';
 import { Resume } from '../../../data/mocks/resumes';
-import { resumeStorage } from '../../storage/resume';
+
+type ScreenState = 'loading' | 'error' | 'success';
 
 export default function ResumeScreen() {
   const [resumes, setResumes] = useState<Resume[]>([]);
+  const [screenState, setScreenState] = useState<ScreenState>('loading');
 
   const loadResumes = useCallback(async () => {
+    setScreenState('loading');
     try {
       const data = await resumeStorage.getAll();
       setResumes(data);
+      setScreenState('success');
     } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось загрузить резюме');
+      setScreenState('error');
     }
   }, []);
 
@@ -64,17 +70,32 @@ export default function ResumeScreen() {
     );
   };
 
+  const handleRetry = () => {
+    loadResumes();
+  };
+
+  // ❌ Error State
+  if (screenState === 'error') {
+    return <ErrorView onRetry={handleRetry} />;
+  }
+
+  // ✅ Loading & Success State
   return (
     <View style={styles.container}>
       <ResumeListScreen
         resumes={resumes}
+        isLoading={screenState === 'loading'}
         on_resumePress={handleResumePress}
         on_menuPress={handleMenuPress}
+        onRefresh={loadResumes}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
 });
