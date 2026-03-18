@@ -1,5 +1,5 @@
 import { apiMocks } from './api-mocks';
-import { resumes } from './resumes';
+import { resumes } from './resumesdata';
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 

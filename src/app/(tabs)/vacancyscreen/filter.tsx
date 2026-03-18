@@ -1,158 +1,169 @@
-import { Picker } from '@react-native-picker/picker';
-import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
-//Тоже уберу в моки
-const cities = [
-  { id: 'c1', name: 'Москва' },
-  { id: 'c2', name: 'Санкт-Петербург' },
-  { id: 'c3', name: 'Казань' },
-  { id: 'c4', name: 'Новосибирск' },
-  { id: 'c5', name: 'Екатеринбург' },
-  { id: 'c6', name: 'Томск' },
-];
-
-const positions = [
-  { id: 'dev', name: 'React Native Developer' },
-  { id: 'front', name: 'Frontend Developer' },
-  { id: 'ui', name: 'UI/UX Designer' },
-  { id: 'ios', name: 'iOS Developer' },
-  { id: 'android', name: 'Android Developer' },
-];
-
-const workFormats = [
-  { id: 'wrk1', name: 'Офис' },
-  { id: 'wrk2', name: 'Удаленно' },
-  { id: 'wrk3', name: 'Гибрид' },
-];
-
-const employmentTypes = [
-  { id: 'emp1', name: 'Полная занятость' },
-  { id: 'emp2', name: 'Частичная занятость' },
-  { id: 'emp3', name: 'Временная работа' },
-  { id: 'emp4', name: 'Стажировка' },
-];
+import Slider from '@react-native-community/slider';
+import { useFilterSearch } from '@/hooks/useFilterSearch';
 
 export default function VacancyFilterScreen() {
 
-    // Получаем текущие фильтры из параметров (если они переданы)
-    const params = useLocalSearchParams<{
-      city?: string;
-      position?: string;
-      workFormat?: string;
-      employmentType?: string;
-      experience?: string;
-      salary?: string;
-  }>();
+  const {
+    selectedCity, setSelectedCity,
+    selectedVacancyType, setSelectedVacancyType,
+    selectedWorkFormat, setSelectedWorkFormat,
+    selectedEmploymentType, setSelectedEmploymentType,
+    experience, setExperience,
+    salary, setSalary,
+    applyFilters,
+    resetFilters,
+    cities, positions, workFormats, employmentTypes,
+  } = useFilterSearch();
 
-  const applyFilters = () => {
-    // Возвращаемся на главный экран, передавая новые фильтры в параметрах
-    router.replace({
-      pathname: '/',
-      params: {
-        city: selectedCity,
-        position: selectedVacancyType,
-        workFormat: selectedWorkFormat,
-        employmentType: selectedEmploymentType,
-        experience,
-        salary,
-      },
-    });
-  };
+  const [openCity, setOpenCity] = useState(false);
+  const [openPosition, setOpenPosition] = useState(false);
 
-
-
-
-    const [selectedCity, setSelectedCity] = useState(params.city || '');
-    const [selectedVacancyType, setSelectedVacancyType] = useState(params.position || '');
-    const [selectedWorkFormat, setSelectedWorkFormat] = useState(params.workFormat || '');
-    const [selectedEmploymentType, setSelectedEmploymentType] = useState(params.employmentType || '');
-    const [experience, setExperience] = useState(params.experience || '');
-    const [salary, setSalary] = useState(params.salary || '');
-
-
-    
-
+  const experienceOptions = [
+    '0 лет',
+    '1-3 года',
+    '4-5 лет',
+    '5+ лет',
+  ];
 
   return (
     <View style={styles.container}>
 
-
       <Text style={styles.title}>Фильтр</Text>
 
-
-      <Text style={styles.subtitle}>Город</Text>
-
-      <View style={styles.pickerContainer}>
-        <Picker selectedValue={selectedCity} onValueChange={setSelectedCity}>
-          <Picker.Item label="Выберите город" value="" />
-          {cities.map((city) => (
-            <Picker.Item key={city.id} label={city.name} value={city.name} />
-          ))}
-        </Picker>
-      </View>
-
-      <Text style={styles.subtitle}>Вакансия</Text>
-
-      <View style={styles.pickerContainer}>
-        <Picker selectedValue={selectedVacancyType} onValueChange={setSelectedVacancyType}>
-          <Picker.Item label="Выберите вакансию" value="" />
-          {positions.map((position) => (
-            <Picker.Item key={position.id} label={position.name} value={position.name} />
-          ))}
-        </Picker>
-      </View>
-
-      <Text style={styles.subtitle}>Формат работы</Text>
-
-      <View style={styles.pickerContainer}>
-        <Picker selectedValue={selectedWorkFormat} onValueChange={setSelectedWorkFormat}>
-          <Picker.Item label="Выберите формат работы" value="" />
-          {workFormats.map((format) => (
-            <Picker.Item key={format.id} label={format.name} value={format.name} />
-          ))}
-        </Picker>
-      </View>
-
-      <Text style={styles.subtitle}>Опыт работы</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Введите опыт работы"
-        value={experience}
-        onChangeText={setExperience}
-        returnKeyType="default"
-      />
-
-
-      <Text style={styles.subtitle}>Тип занятости</Text>
-
-      <View style={styles.pickerContainer}>
-        <Picker selectedValue={selectedEmploymentType} onValueChange={setSelectedEmploymentType}>
-          <Picker.Item label="Выберите тип занятости" value="" />
-          {employmentTypes.map((type) => (
-            <Picker.Item key={type.id} label={type.name} value={type.name} />
-          ))}
-        </Picker>
-      </View>
-
-      <Text style={styles.subtitle}>Зарплата</Text>
-
-  
-      <TextInput
-        style={styles.input}
-        placeholder="Введите зарплату"
-        value={salary}
-        onChangeText={setSalary}
-        returnKeyType="default"
-      />
-
-
-      <Pressable style={styles.button} onPress={applyFilters}>
-        <Text style={styles.buttonText}>Применить / Назад</Text>
+      <Pressable onPress={resetFilters}>
+        <Text style={styles.reset}>Сбросить</Text>
       </Pressable>
 
+      {/* ГОРОД */}
+      <Text style={styles.label}>Город</Text>
+      <Pressable style={styles.select} onPress={() => setOpenCity(true)}>
+        <Text>{selectedCity || 'Выберите город'}</Text>
+        <Text>⌄</Text>
+      </Pressable>
+
+      {/* ВАКАНСИЯ */}
+      <Text style={styles.label}>Вакансия</Text>
+      <Pressable style={styles.select} onPress={() => setOpenPosition(true)}>
+        <Text>{selectedVacancyType || 'Выберите вакансию'}</Text>
+        <Text>⌄</Text>
+      </Pressable>
+
+      {/* ФОРМАТ */}
+      <Text style={styles.label}>Формат работы</Text>
+      <View style={styles.row}>
+        {workFormats.map((f) => {
+          const active = selectedWorkFormat === f.name;
+          return (
+            <Pressable
+              key={f.id}
+              onPress={() => setSelectedWorkFormat(f.name)}
+              style={[styles.chip, active && styles.active]}
+            >
+              <Text style={active && { color: '#fff' }}>{f.name}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* ОПЫТ */}
+      <Text style={styles.label}>Опыт</Text>
+      <View style={styles.row}>
+        {experienceOptions.map((e) => {
+          const active = experience === e;
+          return (
+            <Pressable
+              key={e}
+              onPress={() => setExperience(e)}
+              style={[styles.chip, active && styles.active]}
+            >
+              <Text style={active && { color: '#fff' }}>{e}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* ТИП */}
+      <Text style={styles.label}>Тип занятости</Text>
+      <View style={styles.row}>
+        {employmentTypes.map((t) => {
+          const active = selectedEmploymentType === t.name;
+          return (
+            <Pressable
+              key={t.id}
+              onPress={() => setSelectedEmploymentType(t.name)}
+              style={[styles.chip, active && styles.active]}
+            >
+              <Text style={active && { color: '#fff' }}>{t.name}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* ЗАРПЛАТА */}
+      <Text style={styles.label}>Зарплата</Text>
+      <Text>{salary || 0} ₽</Text>
+
+      <Slider
+        minimumValue={0}
+        maximumValue={300000}
+        step={5000}
+        value={Number(salary) || 0}
+        onValueChange={(v) => setSalary(String(v))}
+      />
+
+      <Pressable style={styles.button} onPress={applyFilters}>
+        <Text style={{ color: '#fff' }}>Применить</Text>
+      </Pressable>
+
+      {/* MODAL ГОРОД */}
+      {openCity && (
+        <View style={styles.modal}>
+          <Pressable style={styles.overlay} onPress={() => setOpenCity(false)} />
+          <View style={styles.sheet}>
+            {cities.map((c) => (
+              <Pressable
+                key={c.id}
+                onPress={() => {
+                  setSelectedCity(c.name);
+                  setOpenCity(false);
+                }}
+                style={styles.item}
+              >
+                <Text>{c.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* MODAL ВАКАНСИЯ */}
+      {openPosition && (
+        <View style={styles.modal}>
+          <Pressable style={styles.overlay} onPress={() => setOpenPosition(false)} />
+          <View style={styles.sheet}>
+            {positions.map((p) => (
+              <Pressable
+                key={p.id}
+                onPress={() => {
+                  setSelectedVacancyType(p.name);
+                  setOpenPosition(false);
+                }}
+                style={styles.item}
+              >
+                <Text>{p.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
 
     </View>
   );
@@ -161,53 +172,83 @@ export default function VacancyFilterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
-    backgroundColor: '#ffffff',
+    padding: 20,
+    backgroundColor: '#fff',
   },
+
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 16,
   },
-  text: {
-    fontSize: 16,
+
+  reset: {
+    color: '#999',
+    marginBottom: 10,
+  },
+
+  label: {
+    marginTop: 12,
+    marginBottom: 6,
     color: '#666',
-    marginBottom: 20,
   },
-  button: {
+
+  select: {
+    height: 48,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+
+  active: {
     backgroundColor: '#111',
-    paddingVertical: 14,
+  },
+
+  button: {
+    marginTop: 'auto',
+    backgroundColor: '#111',
+    padding: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+
+  modal: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
-  input: {
-    flex: 1,            
-    height: 4,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    fontSize: 14,
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+
+  sheet: {
     backgroundColor: '#fff',
-    marginRight: 12,
-    marginBottom: 20,
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#111',
-    marginBottom: 24,
+
+  item: {
+    paddingVertical: 12,
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginBottom: 20,
-    overflow: 'hidden',
-
-  }
-
 });

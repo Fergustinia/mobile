@@ -1,45 +1,30 @@
 import { Picker } from '@react-native-picker/picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { resumes } from '../../data/mocks/resumes';
+import { resumeStorage } from '../../app/storage/resume';
+import { RESUME_TEMPLATES, TemplateId } from '../../data/mocks/resumesdata';
+import ErrorView from '../ui/state/Error';
+import LoadingView from '../ui/state/Loading';
 
-interface ResumeFormData {
-  template: string;
-  fullName: string;
-  experience: string;
-  skills: string;
-  education: string;
-  contacts: string;
-}
+type FormState = 'idle' | 'loading' | 'error' | 'success';
 
-const TEMPLATES = [
-  { label: 'Выбрать шаблон', value: '' },
-  { label: 'Классический', value: 'classic' },
-  { label: 'Современный', value: 'modern' },
-  { label: 'Минималистичный', value: 'minimal' },
-];
-
-interface ResumeFormProps {
-  resumeId?: string;
-  isEditMode?: boolean;
-}
-
-export const ResumeForm: React.FC<ResumeFormProps> = ({ 
-  resumeId, 
-  isEditMode = false 
-}) => {
+export const ResumeForm: React.FC = () => {
   const router = useRouter();
-  const [formData, setFormData] = useState<ResumeFormData>({
-    template: '',
+  const { resumeId } = useLocalSearchParams<{ resumeId?: string }>();
+  const isEditMode = !!resumeId;
+
+  const [formState, setFormState] = useState<FormState>('idle');
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('standard');
+  const [formData, setFormData] = useState({
     fullName: '',
     experience: '',
     skills: '',
@@ -50,25 +35,35 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
   // Загрузка данных при редактировании
   useEffect(() => {
     if (isEditMode && resumeId) {
-      const existingResume = resumes.find(r => r.id === resumeId);
-      if (existingResume) {
-        setFormData({
-          template: existingResume.template || '',
-          fullName: existingResume.fullName || '',
-          experience: existingResume.experience || '',
-          skills: existingResume.skills?.join(', ') || '',
-          education: existingResume.education || '',
-          contacts: existingResume.contacts || '',
-        });
-      }
+      loadResume(resumeId);
     }
   }, [isEditMode, resumeId]);
 
-  const handleInputChange = (field: keyof ResumeFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const loadResume = async (id: string) => {
+    try {
+      const resume = await resumeStorage.getById(id);
+      if (resume) {
+        setFormData({
+          fullName: resume.fullName || '',
+          experience: resume.experience || '',
+          skills: resume.skills || '',
+          education: resume.education || '',
+          contacts: resume.contacts || '',
+        });
+        setSelectedTemplate((resume.template as TemplateId) || 'standard');
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки резюме:', error);
+      setFormState('error');
+    }
   };
 
-  const validateForm = (): boolean => {
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (formState === 'error') setFormState('idle');
+  };
+
+  const validate = (): boolean => {
     if (!formData.fullName.trim()) {
       Alert.alert('Ошибка', 'Пожалуйста, заполните поле ФИО');
       return false;
@@ -76,62 +71,93 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
     return true;
   };
 
-  const handleSave = () => {
-    if (!validateForm()) {
-      return;
-    }
+  const handleSave = async () => {
+    if (!validate()) return;
 
-    // Здесь будет логика сохранения резюме
-    Alert.alert(
-      isEditMode ? 'Резюме обновлено' : 'Резюме создано',
-      isEditMode 
-        ? 'Ваше резюме успешно обновлено' 
-        : 'Ваше резюме успешно сохранено',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    setFormState('loading');
+    try {
+      const resumeData = {
+        name: formData.fullName.trim(),
+        fullName: formData.fullName.trim(),
+        experience: formData.experience,
+        skills: formData.skills,
+        education: formData.education,
+        contacts: formData.contacts,
+        template: selectedTemplate,
+        isRecommended: false,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (isEditMode && resumeId) {
+        await resumeStorage.update(resumeId, resumeData);
+      } else {
+        await resumeStorage.create(resumeData);
+      }
+
+      setFormState('success');
+      
+      setTimeout(() => {
+        router.back();
+      }, 1000);
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      setFormState('error');
+    }
+  };
+
+  const handleRetry = () => {
+    setFormState('idle');
+    handleSave();
   };
 
   const handleCancel = () => {
-    Alert.alert(
-      'Отмена',
-      'Вы уверены, что хотите отменить создание резюме?',
-      [
-        { text: 'Нет', style: 'cancel' },
-        {
-          text: 'Да',
-          style: 'destructive',
-          onPress: () => router.back(),
-        },
-      ]
+    router.back();
+  };
+
+  // 🔄 Loading State
+  if (formState === 'loading') {
+    return <LoadingView />;
+  }
+
+  // ❌ Error State
+  if (formState === 'error') {
+    return <ErrorView onRetry={handleRetry} />;
+  }
+
+  // ✅ Success State
+  if (formState === 'success') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.successContainer}>
+          <Text style={styles.successIcon}>✅</Text>
+          <Text style={styles.successTitle}>Резюме сохранено!</Text>
+        </View>
+      </View>
     );
-  };
+  }
 
-  const handleCreateTemplate = () => {
-    Alert.alert('Создание шаблона', 'Функция создания шаблона');
-  };
-
+  // 📝 Normal State (форма)
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
-        {/* Шаблоны */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Шаблоны</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Создание резюме</Text>
+      </View>
+
+      <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
+        {/* Шаблоны — ВЫПАДАЮЩИЙ СПИСОК */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Шаблоны</Text>
           <View style={styles.pickerContainer}>
             <Picker
-              selectedValue={formData.template}
-              onValueChange={(value) => handleInputChange('template', value)}
+              selectedValue={selectedTemplate}
+              onValueChange={(itemValue) => setSelectedTemplate(itemValue)}
               style={styles.picker}
             >
-              {TEMPLATES.map((template) => (
+              {RESUME_TEMPLATES.map((template) => (
                 <Picker.Item
-                  key={template.value}
-                  label={template.label}
-                  value={template.value}
+                  key={template.id}
+                  label={template.name}
+                  value={template.id}
                 />
               ))}
             </Picker>
@@ -140,13 +166,13 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
 
         {/* ФИО */}
         <View style={styles.field}>
-          <Text style={styles.label}>ФИО</Text>
+          <Text style={styles.label}>ФИО *</Text>
           <TextInput
             style={styles.input}
-            placeholder="Введите ФИО"
-            placeholderTextColor="#8E8E93"
+            placeholder="Иванов Иван Иванович"
+            placeholderTextColor="#999"
             value={formData.fullName}
-            onChangeText={(value) => handleInputChange('fullName', value)}
+            onChangeText={(val) => handleChange('fullName', val)}
           />
         </View>
 
@@ -156,11 +182,11 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Расскажите о своем опыте работы"
-            placeholderTextColor="#8E8E93"
+            placeholderTextColor="#999"
             value={formData.experience}
-            onChangeText={(value) => handleInputChange('experience', value)}
+            onChangeText={(val) => handleChange('experience', val)}
             multiline
-            numberOfLines={4}
+            numberOfLines={3}
             textAlignVertical="top"
           />
         </View>
@@ -170,10 +196,10 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
           <Text style={styles.label}>Навыки</Text>
           <TextInput
             style={styles.input}
-            placeholder="Перечислите ваши навыки через запятую"
-            placeholderTextColor="#8E8E93"
+            placeholder="React, TypeScript, Node.js"
+            placeholderTextColor="#999"
             value={formData.skills}
-            onChangeText={(value) => handleInputChange('skills', value)}
+            onChangeText={(val) => handleChange('skills', val)}
           />
         </View>
 
@@ -182,12 +208,12 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
           <Text style={styles.label}>Образование</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Укажите ваше образование"
-            placeholderTextColor="#8E8E93"
+            placeholder="ВУЗ, специальность, год окончания"
+            placeholderTextColor="#999"
             value={formData.education}
-            onChangeText={(value) => handleInputChange('education', value)}
+            onChangeText={(val) => handleChange('education', val)}
             multiline
-            numberOfLines={3}
+            numberOfLines={2}
             textAlignVertical="top"
           />
         </View>
@@ -197,40 +223,33 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
           <Text style={styles.label}>Контакты</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Телефон, email, Telegram и т.д."
-            placeholderTextColor="#8E8E93"
+            placeholder="Телефон, email, Telegram"
+            placeholderTextColor="#999"
             value={formData.contacts}
-            onChangeText={(value) => handleInputChange('contacts', value)}
+            onChangeText={(val) => handleChange('contacts', val)}
             multiline
-            numberOfLines={3}
+            numberOfLines={2}
             textAlignVertical="top"
           />
         </View>
 
-        {/* Кнопка создания шаблона */}
-        <TouchableOpacity 
-          style={styles.createTemplateButton}
-          onPress={handleCreateTemplate}
-        >
-          <Text style={styles.createTemplateButtonText}>Создать шаблон</Text>
-        </TouchableOpacity>
-
-        {/* Отступ перед кнопками действий */}
-        <View style={styles.actionsSpacer} />
+        <View style={styles.spacer} />
       </ScrollView>
 
       {/* Кнопки действий */}
       <View style={styles.actions}>
         <TouchableOpacity 
-          style={styles.cancelButton}
+          style={styles.cancelButton} 
           onPress={handleCancel}
+          activeOpacity={0.7}
         >
-          <Text style={styles.cancelButtonText}>Отмена</Text>
+          <Text style={styles.cancelButtonText}>Отменить</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.saveButton}
+          style={styles.saveButton} 
           onPress={handleSave}
+          activeOpacity={0.7}
         >
           <Text style={styles.saveButtonText}>Сохранить</Text>
         </TouchableOpacity>
@@ -244,57 +263,67 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  formContainer: {
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  form: {
     flex: 1,
     padding: 16,
   },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  // 📋 Стили для выпадающего списка
+  pickerContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    color: '#000000',
+  },
+  // Остальные стили
   field: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000000',
     marginBottom: 8,
   },
-  pickerContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-  },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    padding: 12,
+    borderColor: '#E0E0E0',
+    padding: 14,
     fontSize: 16,
     color: '#000000',
     minHeight: 50,
   },
   textArea: {
-    minHeight: 100,
+    minHeight: 80,
     paddingTop: 12,
     paddingBottom: 12,
   },
-  createTemplateButton: {
-    backgroundColor: '#E8E8E8',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  createTemplateButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-  },
-  actionsSpacer: {
+  spacer: {
     height: 20,
   },
   actions: {
@@ -308,19 +337,19 @@ const styles = StyleSheet.create({
   cancelButton: {
     flex: 1,
     backgroundColor: '#E8E8E8',
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#000000',
   },
   saveButton: {
     flex: 2,
     backgroundColor: '#007AFF',
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -328,6 +357,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  successContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  successIcon: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#4CAF50',
   },
 });
 
