@@ -20,25 +20,28 @@ export const ResumeCardItem: React.FC<ResumeCardProps> = ({
   onPress,
   onMenuPress,
 }) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Дата не указана';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
   return (
     <View style={styles.card}>
       <TouchableOpacity style={styles.cardContent} onPress={onPress} activeOpacity={0.7}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{resume.name}</Text>
-          {resume.skills && resume.skills.length > 0 && (
-            <Text style={styles.skillsText}>
-              {resume.skills.slice(0, 3).join(', ')}
-              {resume.skills.length > 3 && '...'}
-            </Text>
-          )}
+          <Text style={styles.cardSubtitle}>Название/профессия</Text>
         </View>
         
         <View style={styles.cardFooter}>
-          {typeof resume.experience === 'number' && (
-            <Text style={styles.experienceText}>
-              {resume.experience} {resume.experience === 1 ? 'год' : 'лет'} опыта
-            </Text>
-          )}
+          <Text style={styles.updateDate}>
+            {formatDate(resume.updatedAt)}
+          </Text>
           {resume.isRecommended && (
             <View style={styles.recommendedBadge}>
               <Text style={styles.recommendedText}>Рекомендуемое</Text>
@@ -58,36 +61,77 @@ export const ResumeCardItem: React.FC<ResumeCardProps> = ({
   );
 };
 
+// Компонент скелетона для загрузки
+export const ResumeCardSkeleton: React.FC = () => (
+  <View style={styles.card}>
+    <View style={styles.cardContent}>
+      <View style={styles.skeleton}>
+        <View style={[styles.skeletonBar, { width: '60%', height: 20 }]} />
+        <View style={[styles.skeletonBar, { width: '40%', height: 14, marginTop: 8 }]} />
+      </View>
+      <View style={styles.skeleton}>
+        <View style={[styles.skeletonBar, { width: '50%', height: 14 }]} />
+      </View>
+    </View>
+    <View style={styles.menuButton}>
+      <View style={[styles.skeletonBar, { width: 20, height: 20 }]} />
+    </View>
+  </View>
+);
+
 interface ResumeListScreenProps {
   resumes: Resume[];
+  isLoading?: boolean;
   on_resumePress?: (resume: Resume) => void;
   on_menuPress?: (resume: Resume) => void;
+  onRefresh?: () => void;
 }
 
 export const ResumeListScreen: React.FC<ResumeListScreenProps> = ({
   resumes,
+  isLoading = false,
   on_resumePress,
   on_menuPress,
+  onRefresh,
 }) => {
   const router = useRouter();
 
+  // 🔵 Loading State - скелетоны
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={[styles.skeletonBar, { width: 150, height: 30 }]} />
+        </View>
+        <View style={styles.listContent}>
+          {[1, 2, 3].map((i) => (
+            <ResumeCardSkeleton key={i} />
+          ))}
+        </View>
+      </View>
+    );
+  }
+
+  // 📭 Empty State
   if (resumes.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>Нет резюме</Text>
+        <Text style={styles.emptyIcon}>📄</Text>
+        <Text style={styles.emptyTitle}>У вас пока нет резюме</Text>
         <Text style={styles.emptyText}>
           Создайте первое резюме, чтобы начать откликаться на вакансии
         </Text>
         <TouchableOpacity 
-          style={styles.createButton}
+          style={styles.emptyButton}
           onPress={() => router.push('/(tabs)/resume/create')}
         >
-          <Text style={styles.createButtonText}>Создать резюме</Text>
+          <Text style={styles.emptyButtonText}>Создать первое резюме</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  // ✅ Normal State - список
   return (
     <View style={styles.container}>
       <FlatList
@@ -119,6 +163,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
   listContent: {
     padding: 16,
     gap: 12,
@@ -131,25 +180,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
+  emptyIcon: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#000000',
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
     color: '#8E8E93',
     textAlign: 'center',
     marginBottom: 24,
+    lineHeight: 20,
   },
-  createButton: {
+  emptyButton: {
     backgroundColor: '#007AFF',
     borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
   },
-  createButtonText: {
+  emptyButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
@@ -176,7 +231,7 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 4,
   },
-  skillsText: {
+  cardSubtitle: {
     fontSize: 14,
     color: '#8E8E93',
   },
@@ -184,8 +239,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 4,
   },
-  experienceText: {
+  updateDate: {
     fontSize: 14,
     color: '#8E8E93',
   },
@@ -233,6 +289,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: '#FFFFFF',
     fontWeight: '300',
+  },
+  // Skeleton styles
+  skeleton: {
+    flex: 1,
+  },
+  skeletonBar: {
+    backgroundColor: '#E5E5E5',
+    borderRadius: 4,
   },
 });
 
