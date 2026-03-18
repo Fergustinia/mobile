@@ -23,7 +23,7 @@ export default function VacancyDetailScreen() {
   const vacancyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   // Получаем вакансию по ID
-  const vacancy = allVacancies.find(v => v.id === vacancyId);
+  const vacancy = allVacancies.find((v: { id: any; }) => v.id === vacancyId);
 
   if (!vacancy) {
     return undefined;
@@ -163,9 +163,14 @@ export default function VacancyDetailScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Требования</Text>
-          <Text style={styles.sectionText}>{vacancy.requirements}</Text>
-        </View>
+  <Text style={styles.sectionTitle}>Требования</Text>
+
+  {vacancy.skills?.map((skill: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
+    <Text key={index} style={styles.sectionText}>
+      • {skill}
+    </Text>
+  ))}
+</View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Условия</Text>

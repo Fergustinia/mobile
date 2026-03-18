@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { getCurrentUser, updateUser, VacancyResponse } from '../app/storage/auth';
 import { resumeStorage } from '@/app/storage/resume';
+import { allVacancies } from '@/data/mocks/vacancydata';
+import { checkSkillsMatch } from '../domain/usecases/checkSkillsMatch';
 
 export const useApplicationFlow = (vacancyId: string) => {
   const [modalStep, setModalStep] = useState<'hidden' | 'confirm' | 'warning' | 'success' | 'error'>('hidden');
@@ -55,34 +57,54 @@ export const useApplicationFlow = (vacancyId: string) => {
       Alert.alert('Ошибка', 'Выберите резюме');
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
       const resumes = await resumeStorage.getAll();
       const selectedResume = resumes.find(r => r.id === selectedResumeId);
-
+  
       if (!selectedResume) {
         throw new Error('Резюме не найдено');
       }
-
-      // 🚫 ПРОВЕРКА НАВЫКОВ ВРЕМЕННО ОТКЛЮЧЕНА
-      /*
-      const { isMatch } = checkSkillsMatch(selectedResume);
+  
+      const vacancy = allVacancies.find(v => v.id === vacancyId);
+  
+      if (!vacancy) {
+        throw new Error('Вакансия не найдена');
+      }
+  
+      // 🔍 ЛОГИ ДЛЯ ДЕБАГА
+      console.log('Resume:', selectedResume);
+      console.log('Vacancy:', vacancy);
+  
+      const resumeSkills = selectedResume.skills || [];
+      const vacancySkills = vacancy.skills || [];
+  
+      const { isMatch, matchPercent } = checkSkillsMatch(
+        resumeSkills,
+        vacancySkills
+      );
+  
+      console.log('Match:', matchPercent);
+  
+      // 🔥 ВОТ ЭТО ВАЖНО
       if (!isMatch) {
+        Alert.alert('Недостаточное совпадение', `${matchPercent}%`);
         setModalStep('warning');
         return;
       }
-      */
-
+  
       await submitApplication();
+  
     } catch (err) {
-      console.error(err);
+      console.error('ERROR:', err); // 🔥 теперь видно причину
+      Alert.alert('Ошибка', String(err));
       setModalStep('error');
     } finally {
       setLoading(false);
     }
-  }, [selectedResumeId]);
+  }, [selectedResumeId, vacancyId]);
 
   const handleIgnoreWarning = useCallback(async () => {
     await submitApplication();

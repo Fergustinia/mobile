@@ -2,8 +2,8 @@ export type Resume = {
   id: string;
   name: string;
   fullName?: string;
-  experience?: number;
-  skills?: string[];
+  experience: number;
+  skills: string[];
   education?: string;
   contacts?: string;
   template?: string;

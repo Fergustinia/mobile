@@ -1,16 +1,21 @@
-import type { Resume } from "../../data/mocks/resumesdata"
+export const checkSkillsMatch = (
+  resumeSkills: string[],
+  vacancySkills: string[]
+) => {
+  const normalizedResume = resumeSkills.map(s => s.toLowerCase());
+  const normalizedVacancy = vacancySkills.map(s => s.toLowerCase());
 
-export type SkillsMatchResult = {
-  isMatch: boolean
-}
+  const matched = vacancySkills.filter(skill =>
+    resumeSkills.includes(skill)
+  );
 
-export const checkSkillsMatch = (resume: Resume): SkillsMatchResult => {
-  // Simple domain rule: only recommended resumes are considered a match.
-  // This can be extended later to use real skills and vacancy requirements.
-  if (!resume.isRecommended) {
-    return { isMatch: false }
-  }
+  const matchPercent =
+    normalizedVacancy.length === 0
+      ? 100
+      : Math.round((matched.length / normalizedVacancy.length) * 100);
 
-  return { isMatch: true }
-}
-
+  return {
+    isMatch: matchPercent >= 50,
+    matchPercent,
+  };
+};
