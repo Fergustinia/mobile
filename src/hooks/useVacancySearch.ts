@@ -2,9 +2,35 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { allVacancies } from '@/data/mocks/vacancydata';  // Импортируем вакансии
 import { router, useLocalSearchParams } from 'expo-router';
 
+// Интерфейс для вакансии
+interface Vacancy {
+  id: string;
+  title: string;
+  company: string;
+  description: string;
+  requirements: string;
+  conditions: string;
+  salary: string;
+  workFormat: string;
+  city: string;
+  position: string;
+  employmentType: string;
+  experience: string;
+}
+
+// Интерфейс для фильтров
+interface Filters {
+  city: string;
+  position: string;
+  workFormat: string;
+  employmentType: string;
+  experience: string;
+  salary: string;
+}
+
 export const useVacancySearch = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filters, setFilters] = useState<Filters>({
     city: '',
     position: '',
     workFormat: '',
@@ -12,13 +38,13 @@ export const useVacancySearch = () => {
     experience: '',
     salary: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState(allVacancies);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [results, setResults] = useState<Vacancy[]>(allVacancies);
 
   const handleSearch = useCallback(() => {
     setLoading(true);
     setTimeout(() => {
-      const filtered = allVacancies.filter(vacancy => {
+      const filtered = allVacancies.filter((vacancy: Vacancy) => {
         // Поиск по названию вакансии (регистронезависимый)
         const matchesSearch = vacancy.title.toLowerCase().includes(searchQuery.toLowerCase());
 

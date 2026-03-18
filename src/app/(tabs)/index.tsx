@@ -3,6 +3,22 @@ import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useVacancySearch } from '@/hooks/useVacancySearch';
 
+// Интерфейс для вакансии
+interface Vacancy {
+  id: string;
+  title: string;
+  company: string;
+  description: string;
+  requirements: string;
+  conditions: string;
+  salary: string;
+  workFormat: string;
+  city: string;
+  position: string;
+  employmentType: string;
+  experience: string;
+}
+
 export default function HomeScreen() {
   const {
     searchQuery,
@@ -54,7 +70,7 @@ export default function HomeScreen() {
       {results.length === 0 ? (
         <Text>Нет вакансий по заданным параметрам</Text>
       ) : (
-        results.map((vacancy) => (
+        results.map((vacancy: Vacancy) => (
           <Pressable
             key={vacancy.id}
             style={styles.card}
@@ -64,7 +80,6 @@ export default function HomeScreen() {
             <Text style={styles.cardSubtitle}>{vacancy.company}</Text>
             <Text style={styles.cardSubtitle}>{vacancy.salary}</Text>
             <Text style={styles.cardSubtitle}>{vacancy.workFormat}</Text>
-            <Text style={styles.cardSubtitle} numberOfLines={2}>{vacancy.description}</Text>
             <Text style={styles.cardBottom}>Нажмите для подробной информации</Text>
           </Pressable>
         ))
