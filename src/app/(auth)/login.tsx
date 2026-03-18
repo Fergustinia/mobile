@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 
+import LoadingView from '../../components/ui/state/Loading';
+import ErrorView from '../../components/ui/state/Error';
+
 type Resume = {
   id: string;
   title: string;
@@ -47,6 +50,8 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFatalError, setIsFatalError] = useState(false);
 
   useEffect(() => {
     const loadSavedCredentials = async () => {
@@ -75,7 +80,10 @@ export default function LoginScreen() {
       return;
     }
 
+    setIsLoading(true);
     try {
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
       const rawUsers = await AsyncStorage.getItem(USERS_KEY);
       const users: User[] = rawUsers ? JSON.parse(rawUsers) : [];
 
@@ -89,6 +97,7 @@ export default function LoginScreen() {
 
       if (!foundUser) {
         setError('Неверный email или пароль');
+        setIsLoading(false);
         return;
       }
 
@@ -104,9 +113,21 @@ export default function LoginScreen() {
 
       router.replace('/(tabs)');
     } catch (e) {
-      setError('Ошибка входа');
+      console.error(e);
+      setIsFatalError(true);
+      setIsLoading(false);
     }
   };
+
+// Если случился "вылет" или ошибка базы — показываем ErrorView
+  if (isFatalError) {
+    return <ErrorView onRetry={handleLogin} />;
+  }
+
+  //Если идет процесс входа — показываем LoadingView
+  if (isLoading) {
+    return <LoadingView />;
+  }
 
   return (
     <KeyboardAvoidingView

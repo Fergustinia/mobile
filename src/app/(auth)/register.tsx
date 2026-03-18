@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LoadingView from '../../components/ui/state/Loading';
+import ErrorView from '../../components/ui/state/Error';
 
 type Resume = {
   id: string;
@@ -46,6 +48,7 @@ export default function RegisterScreen() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isFatalError, setIsFatalError] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -79,6 +82,8 @@ export default function RegisterScreen() {
     setError('');
 
     try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       const users = await getUsers();
       const normalizedEmail = email.trim().toLowerCase();
 
@@ -107,12 +112,20 @@ export default function RegisterScreen() {
       await AsyncStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
 
       router.replace('/(auth)/login');
-    } catch {
-      setError('Ошибка регистрации. Попробуйте позже.');
-    } finally {
+    } catch (e) {
+      console.error(e);
+      setIsFatalError(true);
       setLoading(false);
-    }
+          }
   };
+
+  if (isFatalError) {
+    return <ErrorView onRetry={handleRegister} />;
+  }
+
+  if (loading) {
+    return <LoadingView />;
+  }
 
   const handleChangeName = (text: string) => {
     setName(text);
