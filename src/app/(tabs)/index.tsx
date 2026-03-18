@@ -12,9 +12,9 @@ interface Vacancy {
   id: string;
   title: string;
   company: string;
-  description: string;
-  requirements: string;
-  conditions: string;
+  description?: string;
+  requirements?: string;
+  conditions?: string;
   salary: string;
   workFormat: string;
   city: string;
@@ -52,8 +52,7 @@ export default function HomeScreen() {
     return <NotFoundView onRetry={resetFiltersAndSearch} />;
   }
 
-  } = useVacancySearch();
-
+ 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Главная</Text>

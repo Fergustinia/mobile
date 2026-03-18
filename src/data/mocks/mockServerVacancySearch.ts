@@ -1,5 +1,4 @@
-import { allVacancies } from './filters-mocks';
-
+import { allVacancies } from '../mocks/vacancydata';
 
 export interface SearchParams {
   searchQuery: string;
@@ -13,38 +12,56 @@ export interface SearchParams {
   };
 }
 
+// Типизация вакансий
+export interface Vacancy {
+  id: string;
+  title: string;
+  company: string;
+  description?: string;
+  requirements?: string;  // Сделано необязательным
+  conditions?: string;    // Сделано необязательным
+  salary: string;
+  workFormat: string;
+  city: string;
+  position: string;
+  employmentType: string;
+  experience: string;
+}
+
 // Имитация запроса к серверу
-export const fetchVacancies = (params: SearchParams): Promise<typeof allVacancies> => {
+export const fetchVacancies = (params: SearchParams): Promise<Vacancy[]> => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       try {
         const { searchQuery, filters } = params;
         const filtered = allVacancies.filter((vacancy) => {
-          // Безопасная проверка с опциональными цепочками и значениями по умолчанию
-          const matchesSearch = vacancy.title?.toLowerCase().includes(searchQuery?.toLowerCase() ?? '') ?? false;
+          // Проверка на наличие и соответствие фильтрам
+          const matchesSearch = searchQuery
+            ? vacancy.title.toLowerCase().includes(searchQuery.toLowerCase())
+            : true;
 
           const matchesCity = filters.city
-            ? vacancy.city?.toLowerCase() === filters.city.toLowerCase()
+            ? vacancy.city.toLowerCase() === filters.city.toLowerCase()
             : true;
 
           const matchesPosition = filters.position
-            ? vacancy.position?.toLowerCase() === filters.position.toLowerCase()
+            ? vacancy.position.toLowerCase() === filters.position.toLowerCase()
             : true;
 
           const matchesWorkFormat = filters.workFormat
-            ? vacancy.workFormat?.toLowerCase() === filters.workFormat.toLowerCase()
+            ? vacancy.workFormat.toLowerCase() === filters.workFormat.toLowerCase()
             : true;
 
           const matchesEmploymentType = filters.employmentType
-            ? vacancy.employmentType?.toLowerCase() === filters.employmentType.toLowerCase()
+            ? vacancy.employmentType.toLowerCase() === filters.employmentType.toLowerCase()
             : true;
 
           const matchesExperience = filters.experience
-            ? vacancy.experience?.toLowerCase() === filters.experience.toLowerCase()
+            ? vacancy.experience.toLowerCase() === filters.experience.toLowerCase()
             : true;
 
           const matchesSalary = filters.salary
-            ? vacancy.salary?.toLowerCase() === filters.salary.toLowerCase()
+            ? vacancy.salary.toLowerCase() === filters.salary.toLowerCase()
             : true;
 
           return (
@@ -57,10 +74,11 @@ export const fetchVacancies = (params: SearchParams): Promise<typeof allVacancie
             matchesSalary
           );
         });
-        resolve(filtered);
+
+        resolve(filtered);  // Возвращаем отфильтрованные вакансии
       } catch (error) {
-        reject(error);
+        reject(error);  // В случае ошибки, отклоняем Promise
       }
-    }, 500);
+    }, 500);  // Имитация задержки в 500мс
   });
 };
