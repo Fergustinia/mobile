@@ -106,9 +106,9 @@ export default function VacancyDetailScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>← Назад</Text>
-        </TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push('/')}>
+  <Text style={styles.backText}>← Назад</Text>
+</TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentContainer}>
